@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>AsterixDB Query Post Demo</title>
+    <script src="https://code.jquery.com/jquery-3.5.0.js"></script>
+    <meta name="author" content="Akil Sevim" />
+  </head>
+  <body>
+    <form id="queryForm" style="width: 25%">
+      <textarea
+        name="s"
+        placeholder="SQL++ Query"
+        style="width: 100%; height: 250px"
+      ></textarea>
+      <input type="submit" value="Run" style="width: 250px" />
+    </form>
+    <!-- the result of the query will be rendered inside this div -->
+    <pre id="result"></pre>
+    <script>
+      // Attach a submit handler to the form
+      $("#queryForm").submit(function (event) {
+        // Stop form from submitting normally
+        event.preventDefault();
+
+        var url = "http://localhost:19002/query/service";
+        var query = $(this).find('textarea[name="s"]').val();
+
+        console.log(query);
+
+        // Send the data using post
+        var posting = $.post(url, { statement: query });
+
+        // Put the results in a div
+        posting.done(function (data) {
+          console.log(data);
+          $("#result").css("color","black").empty().append(JSON.stringify(data, null, 2));
+        }).fail(function (data) {
+          console.log(data);
+          $("#result").css("color","red").empty().append(JSON.stringify(data, null, 2));
+        });
+
+      });
+    </script>
+  </body>
+</html>
