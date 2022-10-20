@@ -3,7 +3,11 @@ A small independent web application meant to showcase the simplicity and scalabi
 
 # Setup Instructions
 * First, download the simple server package of AsterixDB from their website [here](https://asterixdb.apache.org/download.html)
-* Follow their unstructions and get the cluster running on your local machine
+* In the extracted asterix-server directory, navigate to opt/local/bin/ in the terminal and run 'sh start-sample-cluster.sh'
+* Install [the latest version of Node.js](https://nodejs.org/en/)
+* Open the repo directory in your terminal and run 'npm init -y'
+* cd into the src directory of the repository and run 'npx babel --watch javascript --out-dir JSX --presets react-app/prod'
+	* This is a watcher which updates the javascript folder to the JSX folder. Leave this running if you plan on developing with this repo.
 * Download the LAPD crime dataset [here](https://data.lacity.org/Public-Safety/Crime-Data-from-2010-to-2019/63jg-8b9z)
 * Go to http://localhost:19006/ and paste the following SQL query IMPORTANT NOTE: Make sure to change the file path to that of your own dataset
 ```
