@@ -15,16 +15,17 @@ export default class Page extends React.Component {
 
   submitQuery = () => {
     let posting = this.refs.tableUno.submitQuery();
+    this.setState({ queryResponse: posting });
 
-    posting.done((data) => {
-      console.log(data);
-      this.setState({ queryResponse: data });
-    }).fail(function (data) {
-      console.log("fail");
-      console.log(data);
+    // posting.done((data) => {
+    //   console.log(data);
+    //   this.setState({ queryResponse: data });
+    // }).fail(function (data) {
+    //   console.log("fail");
+    //   console.log(data);
       //this.setState({ queryResponse: {} });
       //TODO: Add proper query fail condition
-    });
+    // });
 
     return posting;
   }
@@ -36,7 +37,7 @@ export default class Page extends React.Component {
         <label class="mb-4">Select how you want to filter the dataset</label>
         <Table tableConfig={inputConfig} ref="tableUno"/>
         <SubmitButton submitQuery={this.submitQuery}/>
-        <Table tableConfig={outputConfig} queryResponse={this.state.queryResponse.results}/>
+        <Table tableConfig={outputConfig} queryResponse={this.state.queryResponse}/>
       </div>
     );
   }
@@ -52,13 +53,15 @@ class SubmitButton extends React.Component {
 
   onClick = () => {
     let posting = this.props.submitQuery();
-    this.setState( {isLoading: true} );
 
-    posting.done((data) => {
-      this.setState( {isLoading: false} );
-    }).fail((data) => {
-      console.log("fail");
-    });
+    //TODO: Come back to button loading later
+    //this.setState( {isLoading: true} );
+
+    // posting.done((data) => {
+    //   this.setState( {isLoading: false} );
+    // }).fail((data) => {
+    //   console.log("fail");
+    // });
   }
 
   render(){
@@ -111,18 +114,18 @@ class Table extends React.Component {
     let finQuery = squel.select().from("csv.csv_set");
 
     //Get which fields should be queried from tableConfig
-    this.props.tableConfig.forEach((row, i) => {
-      row.forEach((cell, j) => {
-        if (cell.field){
-          finQuery.field(cell.field);
-        }
-        else {
-          cell.fields.forEach((cellField) => {
-            finQuery.field(cellField);
-          });
-        }
-      });
-    });
+    // this.props.tableConfig.forEach((row, i) => {
+    //   row.forEach((cell, j) => {
+    //     if (cell.field){
+    //       finQuery.field(cell.field);
+    //     }
+    //     else {
+    //       cell.fields.forEach((cellField) => {
+    //         finQuery.field(cellField);
+    //       });
+    //     }
+    //   });
+    // });
 
     //gather all query restrictions and add them to finQuery with a WHERE clause
     this.children.forEach((row, i) => {
@@ -134,8 +137,8 @@ class Table extends React.Component {
       });
     });
 
-    console.log("finQuery: ", finQuery.toString());
-    return finQuery.toString();
+    //console.log("finQuery: ", finQuery.toString());
+    return finQuery;
   }
 
   submitQuery(){
@@ -144,7 +147,7 @@ class Table extends React.Component {
     let url = "http://localhost:19002/query/service";
 
     // Send the data using post
-    return $.post(url, { statement: query });
+    return query//$.post(url, { statement: query });
   }
 }
 
@@ -188,6 +191,6 @@ const outputConfig = [
   [
     { name: "Area Name", desc:"Breakdown of all ", field: "Area_Name", type: OutputComps.OutputPieChart }
   ],[
-    { name: "Area Name", desc:"Breakdown of all ", fields: ["Lat", "Long"], type: OutputComps.MapWrapper }
+    { name: "Area Name", desc:"Breakdown of all ", fields: ["lat", "long"], type: OutputComps.MapWrapper }
   ]
 ];

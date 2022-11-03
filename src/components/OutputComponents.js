@@ -5,6 +5,8 @@ import Map from 'ol/Map';
 import View from 'ol/View';
 import TileLayer from 'ol/layer/Tile';
 import OSM from 'ol/source/OSM';
+import $ from 'jquery';
+import squel from 'squel'
 
 
 //TODO: Define this globally somewhere, maybe JSON
@@ -36,10 +38,39 @@ class OutputTableCell extends PureComponent {
 
   }
 
+  makeQuery(query){
+    let url = "http://localhost:19002/query/service";
+    let posting = $.post(url, { statement: query.toString() });
+
+    posting.done((data) => {
+      this.setState({ data: data.results });
+      // console.log(query.toString());
+      // console.log(this.props);
+      // console.log(data.results);
+    }).fail((data) => {
+      console.log("query failed: ", query.toString());
+    });
+
+    return
+  }
+
+  //override this to construct queries if different behavior is required
+  constructQuery(query){
+    //Get which fields should be queried from tableConfig
+    if (this.props.field){
+      query.field(this.props.field);
+    }
+    else {
+      this.props.fields.forEach((cellField) => {
+        query.field(cellField);
+      });
+    }
+
+    return query;
+  }
+
   componentWillReceiveProps(nextProps){
-    this.formatQueryResponse(nextProps.queryResponse);
-    //console.log(this.props.field);
-    //console.log(this.state);
+    this.makeQuery(this.constructQuery(nextProps.queryResponse.clone()));
   }
 }
 
@@ -48,30 +79,18 @@ export class OutputPieChart extends OutputTableCell {
     super(props);
   }
 
-  formatQueryResponse(queryResponse){
-    if (!queryResponse)
-      return
+  constructQuery(query){
+    if (this.props.field){
+      query.field(this.props.field + " as name");
+      query.field("COUNT(*) AS `value`");
+      query.group(this.props.field);
+    }
+    else {
+      throw new Error("Used fields instead of field in pie chart");
+    }
 
-    let fieldToDisplay = this.props.field;
-    let newData = [];
-
-    queryResponse.forEach((item, i) => {
-      let fieldName = item[fieldToDisplay];
-      let result = newData.find(obj => { return obj.name === fieldName; })
-      if (result){
-        result.value += 1;
-      } else {
-        newData.push({name: fieldName, value: 1});
-      }
-    });
-
-
-    this.setState( {data: newData});
+    return query;
   }
-
-  // componentWillReceiveProps(nextProps){
-  //   this.formatQueryResponse(nextProps.queryResponse);
-  // }
 
   render() {
     if (this.state.data.length == 0)
@@ -105,6 +124,32 @@ export class MapWrapper extends OutputTableCell{
   }
 
   render(){
+
+    console.log(this.state.data);
+
+    let features = [];
+    this.state.data.forEach((item, i) => {
+      features.push(new ol.Feature({
+        geometry: new ol.geom.Point(ol.proj.fromLonLat([
+          item.lat, item.long
+        ]))
+      }));
+    });
+
+    // create the source and layer for random features
+    const vectorSource = new ol.source.Vector({
+      features
+    });
+    const vectorLayer = new ol.layer.Vector({
+      source: vectorSource,
+      style: new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: 2,
+          fill: new ol.style.Fill({color: 'red'})
+        })
+      })
+    });
+
     const map = new Map({
       view: new View({
         center: [0, 0],
@@ -114,6 +159,7 @@ export class MapWrapper extends OutputTableCell{
         new TileLayer({
           source: new OSM(),
         }),
+        vectorLayer
       ],
       target: 'map',
     });
