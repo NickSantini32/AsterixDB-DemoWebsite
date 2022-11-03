@@ -1,21 +1,13 @@
 import React, { Component }  from 'react';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
-import {Button, Form, Dropdown} from 'react-bootstrap';
+import {Button, Form, Dropdown, Collapse} from 'react-bootstrap';
 import $ from 'jquery';
 import * as OutputComps from './components/OutputComponents';
 import * as CellTypes from './components/InputComponents';
+import squel from 'squel'
 
-
-function App() {
-  return (
-    <Page/>
-  );
-}
-
-export default App;
-
-class Page extends React.Component {
+export default class Page extends React.Component {
   constructor(props){
     super(props);
     this.state = { queryResponse: {}  };
@@ -24,13 +16,14 @@ class Page extends React.Component {
   submitQuery = () => {
     let posting = this.refs.tableUno.submitQuery();
 
-    posting.done(function (data) {
+    posting.done((data) => {
       console.log(data);
       this.setState({ queryResponse: data });
     }).fail(function (data) {
       console.log("fail");
       console.log(data);
-      this.setState({ queryResponse: {} });
+      //this.setState({ queryResponse: {} });
+      //TODO: Add proper query fail condition
     });
 
     return posting;
@@ -39,10 +32,11 @@ class Page extends React.Component {
   render(){
     return(
       <div>
-        <h1>LAPD Crime Data Filters</h1>
+        <h1 class="mb-0 pb-0" >LAPD Crime Data Filters</h1>
+        <label class="mb-4">Select how you want to filter the dataset</label>
         <Table tableConfig={inputConfig} ref="tableUno"/>
         <SubmitButton submitQuery={this.submitQuery}/>
-        <Table tableConfig={outputConfig}/>
+        <Table tableConfig={outputConfig} queryResponse={this.state.queryResponse.results}/>
       </div>
     );
   }
@@ -86,23 +80,23 @@ class Table extends React.Component {
     super(props);
     this.children = [];
 
-    //assign refs to table cells
-    this.props.tableConfig.rows.forEach((row, i) => {
+    //create refs to all table cells in this.children to be assinged in render
+    this.props.tableConfig.forEach((row, i) => {
       this.children.push([]);
       row.forEach((cell, j) => {
         this.children[i].push(React.createRef())
       });
     });
   }
-//return <TableCol name={cell.name} field={cell.field} type={cell.type} key={j} ref={this.children[i][j]}/>;
+
   render(){
     return(
       <div className="container">
-      {this.props.tableConfig.rows.map((row, i) => {
+      {this.props.tableConfig.map((row, i) => {
         return (
           <div className="row" id="buttons" key={i}>
-            {row.map((cell, j) => {
-              return <TableCol {... cell} key={j} ref={this.children[i][j]}/>;
+            {row.map((cellData, j) => {
+              return <TableCol {... cellData} queryResponse={this.props.queryResponse} key={j} ref={this.children[i][j]}/>;
             })}
           </div>
         )
@@ -113,35 +107,40 @@ class Table extends React.Component {
   }
 
   constructQuery(){
-    let queries = []
+    //TODO: define use csv and csv_set somewhere globally
+    let finQuery = squel.select().from("csv.csv_set");
 
-    this.children.forEach((row, i) => {
+    //Get which fields should be queried from tableConfig
+    this.props.tableConfig.forEach((row, i) => {
       row.forEach((cell, j) => {
-        let queryPart = cell.current.getChildQuery();
-        if (queryPart !== "") {
-          queries.push(queryPart);
+        if (cell.field){
+          finQuery.field(cell.field);
+        }
+        else {
+          cell.fields.forEach((cellField) => {
+            finQuery.field(cellField);
+          });
         }
       });
     });
 
-    if (queries.length == 0){
-      return "use csv;\n SELECT * FROM csv_set";
-    }
-
-    let finQuery = "use csv;\n" +
-    "SELECT * FROM csv_set WHERE\n";
-
-    queries.forEach((item, i) => {
-      finQuery += item + "\n";
-      if (i < queries.length - 1){ finQuery += "AND "; }
+    //gather all query restrictions and add them to finQuery with a WHERE clause
+    this.children.forEach((row, i) => {
+      row.forEach((cell, j) => {
+        let queryPart = cell.current.getChildQuery();
+        if (queryPart !== "") {
+          finQuery.where(queryPart);
+        }
+      });
     });
 
-    console.log(finQuery);
-    return finQuery;
+    console.log("finQuery: ", finQuery.toString());
+    return finQuery.toString();
   }
 
   submitQuery(){
     let query = this.constructQuery();
+    //TODO: define this URL higher in the higherarchy
     let url = "http://localhost:19002/query/service";
 
     // Send the data using post
@@ -177,28 +176,18 @@ class TableCol extends React.Component {
   }
 }
 
-const inputConfig = {
-  rows: [
-    [ { name: "Area Name", field: "Area_Name", type: CellTypes.DataList },
-      { name: "Area Name", field: "Area_Name", type: CellTypes.RadioButtons },
-      { name: "Area Name", field: "Area_Name", type: CellTypes.TableDropDown }
-    ]//,
-    // [ { name: "Area Name", field: "Area_Name", type: DataList },
-    //   { name: "Area Name", field: "Area_Name", type: RadioButtons },
-    //   { name: "Area Name", field: "Area_Name", type: TableDropDown }
-    // ],
+const inputConfig = [
+  [
+    { name: "Area Name", desc:"The area in which the event was reported", field: "Area_Name", type: CellTypes.DataList },
+    { name: "Victim Descent", desc:"The ethnicity of the victim", field: "Vict_Descent", type: CellTypes.RadioButtons },
+    { name: "Victim Sex", desc:"The gender of the victim", field: "Vict_Sex", type: CellTypes.TableDropDown }
   ]
-};
+];
 
-const outputConfig = {
-  rows: [
-    [ { name: "Area Name", field: "Area_Name", type: OutputComps.OutputPieChart },
-      // { name: "Area Name", field: "Area_Name", type: CellTypes.RadioButtons },
-      // { name: "Area Name", field: "Area_Name", type: CellTypes.TableDropDown }
-    ]//,
-    // [ { name: "Area Name", field: "Area_Name", type: DataList },
-    //   { name: "Area Name", field: "Area_Name", type: RadioButtons },
-    //   { name: "Area Name", field: "Area_Name", type: TableDropDown }
-    // ],
+const outputConfig = [
+  [
+    { name: "Area Name", desc:"Breakdown of all ", field: "Area_Name", type: OutputComps.OutputPieChart }
+  ],[
+    { name: "Area Name", desc:"Breakdown of all ", fields: ["Lat", "Long"], type: OutputComps.MapWrapper }
   ]
-};
+];
