@@ -1,10 +1,13 @@
 import React, { PureComponent, useRef, useState, useEffect } from 'react';
 import { PieChart, Pie, Sector, Cell, ResponsiveContainer } from 'recharts';
-import * as ol from "ol";
-import Map from 'ol/Map';
-import View from 'ol/View';
-import TileLayer from 'ol/layer/Tile';
-import OSM from 'ol/source/OSM';
+
+import {Feature, Map, Overlay, View} from 'ol/index';
+import {OSM, Vector as VectorSource} from 'ol/source';
+import {Point} from 'ol/geom';
+import {Style, Circle, Fill} from 'ol/style';
+import {Tile as TileLayer, Vector as VectorLayer} from 'ol/layer';
+import {fromLonLat} from 'ol/proj';
+
 import $ from 'jquery';
 import squel from 'squel'
 
@@ -121,52 +124,71 @@ export class OutputPieChart extends OutputTableCell {
 export class MapWrapper extends OutputTableCell{
   constructor(props){
     super(props);
-  }
-
-  render(){
-
-    console.log(this.state.data);
-
-    let features = [];
-    this.state.data.forEach((item, i) => {
-      features.push(new ol.Feature({
-        geometry: new ol.geom.Point(ol.proj.fromLonLat([
-          item.lat, item.long
-        ]))
-      }));
-    });
-
-    // create the source and layer for random features
-    const vectorSource = new ol.source.Vector({
-      features
-    });
-    const vectorLayer = new ol.layer.Vector({
-      source: vectorSource,
-      style: new ol.style.Style({
-        image: new ol.style.Circle({
-          radius: 2,
-          fill: new ol.style.Fill({color: 'red'})
-        })
-      })
-    });
 
     const map = new Map({
       view: new View({
         center: [0, 0],
-        zoom: 1,
+        zoom: 2,
       }),
       layers: [
         new TileLayer({
           source: new OSM(),
         }),
-        vectorLayer
+        this.createVectorLayer()
       ],
-      target: 'map',
+      //target: 'map',
+    })
+
+    this.state.map = map;
+
+  }
+
+  componentDidMount(){
+    this.state.map.setTarget("map-container");
+  }
+
+  createVectorLayer(){
+    let features = [];
+    this.state.data.forEach((item, i) => {
+      features.push(new Feature({
+        geometry: new Point(fromLonLat([
+          item.long, item.lat
+        ]))
+      }));
     });
 
+    // create the source and layer for random features
+    const vectorSource = new VectorSource({
+      features
+    });
+    const vectorLayer = new VectorLayer({
+      source: vectorSource,
+      style: new Style({
+        image: new Circle({
+          radius: 2,
+          fill: new Fill({color: 'red'})
+        })
+      })
+    });
+
+    return vectorLayer;
+  }
+
+  render(){
+
+    console.log("state", this.state.data);
+    this.state.map.setLayers([
+      new TileLayer({
+        source: new OSM(),
+      }),
+      this.createVectorLayer()
+    ])
+
+
+    //TODO: Change all width and heights to maxwidth maxhight and make it a function of vh and vw
     let style = {width: 600, height: 400};
     return (
-      <div id="map" style={style}></div>
+      <div id="map-container" style={style}></div>
     );
   }
 }
