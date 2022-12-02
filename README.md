@@ -2,8 +2,8 @@
 A small independent web application meant to showcase the simplicity and scalability of AsterixDB
 
 # Documentation Videos
-* [here]()
-* [here]()
+* [Asterixdb General Project Overview](https://youtu.be/Czh94ciT02A)
+* [Asterixdb Technical JS Overview](https://youtu.be/-zvdzW8AyWw)
 
 # Setup Instructions
 * Download the simple server package of AsterixDB from their website [here](https://asterixdb.apache.org/download.html)
