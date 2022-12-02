@@ -7,25 +7,17 @@ import * as OutputComps from './components/OutputComponents';
 import * as CellTypes from './components/InputComponents';
 import squel from 'squel'
 
+//homepage display class
 export default class Page extends React.Component {
   constructor(props){
     super(props);
     this.state = { queryResponse: {}  };
   }
 
+  //create query where clause from input components and pass that object to all output components
   submitQuery = () => {
     let posting = this.refs.tableUno.submitQuery();
     this.setState({ queryResponse: posting });
-
-    // posting.done((data) => {
-    //   console.log(data);
-    //   this.setState({ queryResponse: data });
-    // }).fail(function (data) {
-    //   console.log("fail");
-    //   console.log(data);
-      //this.setState({ queryResponse: {} });
-      //TODO: Add proper query fail condition
-    // });
 
     return posting;
   }
@@ -35,9 +27,10 @@ export default class Page extends React.Component {
       <div>
         <h1 class="mb-0 pb-0" >LAPD Crime Data Filters</h1>
         <label class="mb-4">Select how you want to filter the dataset</label>
+        <Table tableConfig={outputConfig} queryResponse={this.state.queryResponse}/>
         <Table tableConfig={inputConfig} ref="tableUno"/>
         <SubmitButton submitQuery={this.submitQuery}/>
-        <Table tableConfig={outputConfig} queryResponse={this.state.queryResponse}/>
+        <Table tableConfig={outputConfig1} queryResponse={this.state.queryResponse}/>
       </div>
     );
   }
@@ -45,6 +38,7 @@ export default class Page extends React.Component {
 
 }
 
+//Button to submit query
 class SubmitButton extends React.Component {
   constructor(props){
     super(props);
@@ -55,7 +49,7 @@ class SubmitButton extends React.Component {
     let posting = this.props.submitQuery();
 
     //TODO: Come back to button loading later
-    //this.setState( {isLoading: true} );
+    // this.setState( {isLoading: true} );
 
     // posting.done((data) => {
     //   this.setState( {isLoading: false} );
@@ -78,6 +72,8 @@ class SubmitButton extends React.Component {
 
 //TODO: add constructor check to make sure no field is quereied twice in table config
 //TODO: change table ref to be correct
+
+//Table wrapper class meant to contain exclusively input or all output components
 class Table extends React.Component {
   constructor(props){
     super(props);
@@ -113,21 +109,7 @@ class Table extends React.Component {
     //TODO: define use csv and csv_set somewhere globally
     let finQuery = squel.select().from("csv.csv_set");
 
-    //Get which fields should be queried from tableConfig
-    // this.props.tableConfig.forEach((row, i) => {
-    //   row.forEach((cell, j) => {
-    //     if (cell.field){
-    //       finQuery.field(cell.field);
-    //     }
-    //     else {
-    //       cell.fields.forEach((cellField) => {
-    //         finQuery.field(cellField);
-    //       });
-    //     }
-    //   });
-    // });
-
-    //gather all query restrictions and add them to finQuery with a WHERE clause
+    //gather all query restrictions from input comps and add them to finQuery with a WHERE clause
     this.children.forEach((row, i) => {
       row.forEach((cell, j) => {
         let queryPart = cell.current.getChildQuery();
@@ -137,7 +119,6 @@ class Table extends React.Component {
       });
     });
 
-    //console.log("finQuery: ", finQuery.toString());
     return finQuery;
   }
 
@@ -146,11 +127,11 @@ class Table extends React.Component {
     //TODO: define this URL higher in the higherarchy
     let url = "http://localhost:19002/query/service";
 
-    // Send the data using post
-    return query//$.post(url, { statement: query });
+    return query
   }
 }
 
+//wrapper for each cell to display dynamically declared components defined within table props
 class TableCol extends React.Component {
   constructor(props){
     super(props);
@@ -179,6 +160,8 @@ class TableCol extends React.Component {
   }
 }
 
+
+//Configs for each table. Will be moved to JSON eventually
 const inputConfig = [
   [
     { name: "Area Name", desc:"The area in which the event was reported", field: "Area_Name", type: CellTypes.DataList },
@@ -190,7 +173,11 @@ const inputConfig = [
 const outputConfig = [
   [
     { name: "Area Name", desc:"Breakdown of all ", field: "Area_Name", type: OutputComps.OutputPieChart }
-  ],[
+  ]
+];
+
+const outputConfig1 = [
+  [
     { name: "Area Name", desc:"Breakdown of all ", fields: ["lat", "long"], type: OutputComps.MapWrapper }
   ]
 ];

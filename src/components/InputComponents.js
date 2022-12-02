@@ -5,8 +5,7 @@ import {Button, Form, Dropdown} from 'react-bootstrap';
 import $ from 'jquery';
 import squel from 'squel'
 
-//abstract base class for all cell components
-//contains the database query functions that all subclasses will use
+//Super class for all input components
 class InputTableCell extends React.Component {
   constructor(props){
     super(props);
@@ -15,6 +14,7 @@ class InputTableCell extends React.Component {
   }
 
   //TODO: Convert this to SQL API
+  //Loads fields speccified in props
   loadDistinctFields(field){
     var url = "http://localhost:19002/query/service";
 
@@ -31,6 +31,8 @@ class InputTableCell extends React.Component {
     })
   }
 
+  //TODO: Switch these to use the API
+  //create sql query based on options selected in implemented subclass
   getSqlQuery(){
     let fields = this.getFieldPossibleValues();
 
@@ -61,17 +63,16 @@ export class DataList extends InputTableCell {
   }
 
   onChange = () => {
-    this.state.text = this.refs.woah.value;
+    this.state.text = this.refs.list1.value;
   }
 
-  //TODO: Change woah ref
   render() {
     return (
       <div>
         <h4 htmlFor="exampleDataList" className="form-label">{this.props.name}</h4>
         <label htmlFor="exampleDataList" className="form-label">{this.props.desc}</label>
         <input className="form-control"
-        ref="woah" list={this.props.field} placeholder="Type to search..." onChange={this.onChange}/>
+        ref="list1" list={this.props.field} placeholder="Type to search..." onChange={this.onChange}/>
         <datalist id={this.props.field}>
           {this.state.distinct.map((item, i) => {
             return <option value={item} key={i}/>;
@@ -179,6 +180,7 @@ export class TableDropDown extends InputTableCell{
   }
 }
 
+//WORK IN PROGRESS
 export class ZipcodeFilter extends InputTableCell{
   constructor(props) {
     super(props);
@@ -186,17 +188,16 @@ export class ZipcodeFilter extends InputTableCell{
   }
 
   onChange = () => {
-    this.state.text = this.refs.woah.value;
+    this.state.text = this.refs.list1.value;
   }
 
-  //TODO: Change woah ref
   render() {
     return (
       <div>
         <h4 htmlFor="exampleDataList" className="form-label">{this.props.name}</h4>
         <label htmlFor="exampleDataList" className="form-label">{this.props.desc}</label>
         <input className="form-control"
-        ref="woah" list={this.props.field} placeholder="Type to search..." onChange={this.onChange}/>
+        ref="list1" list={this.props.field} placeholder="Type to search..." onChange={this.onChange}/>
         <datalist id={this.props.field}>
           {this.state.distinct.map((item, i) => {
             return <option value={item} key={i}/>;

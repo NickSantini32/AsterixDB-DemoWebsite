@@ -15,41 +15,20 @@ import squel from 'squel'
 //TODO: Define this globally somewhere, maybe JSON
 var dbName = "csv_set"
 
+//Super class for all output components
 class OutputTableCell extends PureComponent {
   constructor(props){
     super(props);
     this.state = { data: [] }
   }
 
-  formatQueryResponse(queryResponse){
-    if (!queryResponse)
-      return
-
-    //console.log(queryResponse);
-    if (this.props.field){
-      let fieldToDisplay = this.props.field;
-      this.setState( {data:
-        queryResponse.map((item, i) => {
-          return (item[fieldToDisplay]);
-        })
-      });
-    }
-    else{
-      //console.log("response: ", queryResponse);
-    }
-
-
-  }
-
+  //query the dataset with the input parameter and set the result to state variable
   makeQuery(query){
     let url = "http://localhost:19002/query/service";
     let posting = $.post(url, { statement: query.toString() });
 
     posting.done((data) => {
       this.setState({ data: data.results });
-      // console.log(query.toString());
-      // console.log(this.props);
-      // console.log(data.results);
     }).fail((data) => {
       console.log("query failed: ", query.toString());
     });
@@ -72,6 +51,7 @@ class OutputTableCell extends PureComponent {
     return query;
   }
 
+  //if a query object (where clause only) is passed from the table, we query for what we need using it
   componentWillReceiveProps(nextProps){
     this.makeQuery(this.constructQuery(nextProps.queryResponse.clone()));
   }
@@ -95,25 +75,37 @@ export class OutputPieChart extends OutputTableCell {
     return query;
   }
 
+  renderLabel(entry) {
+    return entry.name + ": " + entry.value;
+  }
+
   render() {
     if (this.state.data.length == 0)
       return(<div/>);
 
+    const COLORS = ["#0074D9", "#FF4136", "#2ECC40", "#FF851B", "#7FDBFF", "#B10DC9", "#FFDC00", "#001f3f", "#39CCCC", "#01FF70", "#85144b", "#F012BE", "#3D9970", "#111111", "#AAAAAA"];
+
+    let width = 400;
+    let height = 300;
     return (
       <div >
-      <label className="form-label">{"Distribution of " + this.props.name + "'s"}</label>
-      <PieChart width={300} height={300}>
+      <label className="form-label">{"Given the criteria, the pie chart shows the number of crimes committed for each " + this.props.name}</label><br/>
+      <label className="form-label">{"Format: {" + this.props.name + ", number of crimes committed}"}</label>
+      <PieChart width={width} height={height}>
         <Pie
+          label={this.renderLabel}
           dataKey="value"
           startAngle={-180}
           endAngle={180}
           data={this.state.data}
-          cx={150}
-          cy={150}
+          cx={width/2}
+          cy={height/2}
           outerRadius={80}
           fill="#8884d8"
-          label
-        />
+        >{
+          	this.state.data.map((entry, i) => <Cell fill={COLORS[i % COLORS.length]}/>)
+          }
+        </Pie>
       </PieChart>
       </div>
     );
@@ -149,23 +141,39 @@ export class MapWrapper extends OutputTableCell{
 
   createVectorLayer(){
     let features = [];
-    this.state.data.forEach((item, i) => {
-      features.push(new Feature({
-        geometry: new Point(fromLonLat([
-          item.long, item.lat
-        ]))
-      }));
-    });
+    let avgCenter = [0,0];
 
-    // create the source and layer for random features
+    //if lat and long have been queried for then plot them on the map
+    this.state.data.forEach((item, i) => {
+      if (item.long && item.lat){
+        avgCenter[0] += item.long;
+        avgCenter[1] += item.lat;
+        features.push(new Feature({
+          geometry: new Point(fromLonLat([
+            item.long, item.lat
+          ]))
+        }));
+      }
+    });
+    console.log(this.state.data);
+    //set view to be inclusive of all points
+    //avgCenter[0] /= this.state.data.size();
+    //avgCenter[1] /= this.state.data.size();
+    // this.state.map.setView(new View({
+    //   center: avgCenter,
+    //   zoom: 2,
+    // }));
+
+    // create the source and layer for point features
     const vectorSource = new VectorSource({
       features
     });
+    //define how points will be plotted
     const vectorLayer = new VectorLayer({
       source: vectorSource,
       style: new Style({
         image: new Circle({
-          radius: 2,
+          radius: 4,
           fill: new Fill({color: 'red'})
         })
       })
