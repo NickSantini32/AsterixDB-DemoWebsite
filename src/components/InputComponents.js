@@ -13,16 +13,23 @@ class InputTableCell extends React.Component {
     this.loadDistinctFields(props.field);
   }
 
-  //TODO: Convert this to SQL API
+
   //Loads fields speccified in props
   loadDistinctFields(field){
     var url = "http://localhost:19002/query/service";
 
-    var query = "use csv;\n select distinct " + field + "\n from csv_set;";
+    var query = "use csv;" +
+            squel.select()
+              .distinct()
+              .field(field)
+              .from("csv_set")
+              .toString();
+
     var posting = $.post(url, { statement: query });
 
     posting.done((data) => {
       this.setState({
+        //unpacks the query response and stores the array of distinct values in state.distinct
         distinct: data.results.map((item, i) => { return item[field]; })
       });
     }).fail((data) => {
@@ -31,7 +38,6 @@ class InputTableCell extends React.Component {
     })
   }
 
-  //TODO: Switch these to use the API
   //create sql query based on options selected in implemented subclass
   getSqlQuery(){
     let fields = this.getFieldPossibleValues();
@@ -98,11 +104,13 @@ export class RadioButtons extends InputTableCell{
   }
 
   click = (item) => {
+    console.log(item);
     if (this.state.selected.includes(item)){
       this.state.selected.pop(item);
     } else{
       this.state.selected.push(item);
     }
+    console.log(this.state.selected);
   }
 
   render(){
@@ -180,7 +188,46 @@ export class TableDropDown extends InputTableCell{
   }
 }
 
-//WORK IN PROGRESS
+
+export class DateRange extends InputTableCell{
+  constructor(props) {
+    super(props);
+    this.state.startDate = null;
+    this.state.endDate = null;
+  }
+
+
+
+  render() {
+    return (
+      <div>
+        <h4 htmlFor="exampleDataList" className="form-label">{this.props.name}</h4>
+        <label htmlFor="exampleDataList" className="form-label">{this.props.desc}</label>
+        <div className="row">
+          <div className="col" onChange={(e) => {this.setState({startDate: e.target.value}); }}>
+            <h6>Start Date</h6>
+            <Form.Control type="date" name='start date'/>
+          </div>
+          <div className="col" onChange={(e) => {this.setState({endDate: e.target.value}); }}>
+            <h6>End Date</h6>
+            <Form.Control type="date" name='end date'/>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  getSqlQuery(){
+    squel.select();
+
+    if (this.state.startDate && this.state.endDate)
+      return "date(" + this.props.field + ") >= date(\"" + this.state.startDate + "\") AND date(" + this.props.field + ") <= date(\"" + this.state.endDate + "\")";
+
+    return "";
+  }
+}
+
+
 export class ZipcodeFilter extends InputTableCell{
   constructor(props) {
     super(props);

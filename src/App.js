@@ -1,11 +1,13 @@
 import React, { Component }  from 'react';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
-import {Button, Form, Dropdown, Collapse} from 'react-bootstrap';
+import {Button, Form, Dropdown, Collapse, Col, Row} from 'react-bootstrap';
 import $ from 'jquery';
 import * as OutputComps from './components/OutputComponents';
 import * as CellTypes from './components/InputComponents';
 import squel from 'squel'
+
+//TODO: DEFINE DATABASE ELEMENTS GLOBALLY
 
 //homepage display class
 export default class Page extends React.Component {
@@ -29,6 +31,7 @@ export default class Page extends React.Component {
         <label class="mb-4">Select how you want to filter the dataset</label>
         <Table tableConfig={outputConfig} queryResponse={this.state.queryResponse}/>
         <Table tableConfig={inputConfig} ref="tableUno"/>
+        <br/>
         <SubmitButton submitQuery={this.submitQuery}/>
         <Table tableConfig={outputConfig1} queryResponse={this.state.queryResponse}/>
       </div>
@@ -93,11 +96,11 @@ class Table extends React.Component {
       <div className="container">
       {this.props.tableConfig.map((row, i) => {
         return (
-          <div className="row" id="buttons" key={i}>
+          <Row className="justify-content-md-center" id="buttons" key={i}>
             {row.map((cellData, j) => {
               return <TableCol {... cellData} queryResponse={this.props.queryResponse} key={j} ref={this.children[i][j]}/>;
             })}
-          </div>
+          </Row>
         )
 
       })}
@@ -118,7 +121,7 @@ class Table extends React.Component {
         }
       });
     });
-
+    console.log(finQuery.toString());
     return finQuery;
   }
 
@@ -144,9 +147,10 @@ class TableCol extends React.Component {
     if (this.props.type){
       let MyComponent = this.props.type;
       return(
-        <div className="col" align="center">
+        //<div className="col sm={2}" align="center">
+        <Col align="center" style={{maxWidth: "50%"}}>
           <MyComponent {... this.props} ref={this.child}/>
-        </div>
+        </Col>
       );
     }
 
@@ -167,6 +171,10 @@ const inputConfig = [
     { name: "Area Name", desc:"The area in which the event was reported", field: "Area_Name", type: CellTypes.DataList },
     { name: "Victim Descent", desc:"The ethnicity of the victim", field: "Vict_Descent", type: CellTypes.RadioButtons },
     { name: "Victim Sex", desc:"The gender of the victim", field: "Vict_Sex", type: CellTypes.TableDropDown }
+  ],
+  [
+    { name: "Date Range", desc:"Pick a date range for the data", field: "Datetime_OCC", type: CellTypes.DateRange },
+    { name: "Zip Code Filter", desc:"Pick a zip code for the data", field: "Datetime_OCC", type: CellTypes.ZipcodeFilter },
   ]
 ];
 
@@ -178,6 +186,6 @@ const outputConfig = [
 
 const outputConfig1 = [
   [
-    { name: "Area Name", desc:"Breakdown of all ", fields: ["lat", "long"], type: OutputComps.MapWrapper }
+    { name: "Area Name", desc:"Breakdown of all ", fields: ["lat", "long"], geometry: "g", geometryLabel: "ZCTA5CE10", geomDataset: "csv_zipset", type: OutputComps.MapWrapper }
   ]
 ];
