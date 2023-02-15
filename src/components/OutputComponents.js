@@ -13,6 +13,7 @@ import {Extent} from 'ol/extent';
 import $ from 'jquery';
 import squel from 'squel'
 
+const COLORS = ["#0074D9", "#FF4136", "#2ECC40", "#FF851B", "#7FDBFF", "#B10DC9", "#FFDC00", "#001f3f", "#39CCCC", "#01FF70", "#85144b", "#F012BE", "#3D9970", "#111111", "#AAAAAA"];
 
 //TODO: Define this globally somewhere, maybe JSON
 var dbName = "csv_set"
@@ -53,6 +54,34 @@ class OutputTableCell extends PureComponent {
     return query;
   }
 
+  /**
+  * returns an array of color indecies for all distinct values
+  * @param {String} - the field to query for value
+  * @return {String[]} - array of distinct values
+  */
+  getUniqueFields(field){
+    if (this.props.queryResponse && !$.isEmptyObject(this.props.queryResponse)){
+      let query = this.props.queryResponse.clone();
+      query.field(field).distinct();
+
+      let url = "http://localhost:19002/query/service";
+      let posting = $.ajax({
+         type: "GET",
+         url: url,
+         data: { statement: query.toString() },
+         async: false,
+      });
+
+      let ret = [];
+      posting.done((data) => {
+        ret = data.results.map(x => x[field]);
+      }).fail((data) => {
+        console.error("query failed: ", query.toString());
+      });
+      return ret;
+    }
+  }
+
   //if a query object (where clause only) is passed from the table, we query for what we need using it
   componentDidUpdate(prevProps){
     //if props are new make the relevant query
@@ -88,8 +117,6 @@ export class OutputPieChart extends OutputTableCell {
     if (this.state.data.length == 0)
       return(<div/>);
 
-    const COLORS = ["#0074D9", "#FF4136", "#2ECC40", "#FF851B", "#7FDBFF", "#B10DC9", "#FFDC00", "#001f3f", "#39CCCC", "#01FF70", "#85144b", "#F012BE", "#3D9970", "#111111", "#AAAAAA"];
-
     let width = 400;
     let height = 300;
     return (
@@ -107,14 +134,27 @@ export class OutputPieChart extends OutputTableCell {
           cy={height/2}
           outerRadius={80}
           fill="#8884d8"
-        >{
-          	this.state.data.map((entry, i) => <Cell fill={COLORS[i % COLORS.length]}/>)
-          }
+        >
+        {
+          	this.populateGraph()
+        }
         </Pie>
       </PieChart>
       </div>
     );
   }
+
+  //returns array of pie cells with unique colors
+  populateGraph(){
+    var id = this.props.field;
+    var colorIndecies = this.getUniqueFields(id);
+
+    return this.state.data.map((entry) => {
+      let colorIndex = colorIndecies.indexOf(entry.name);
+      return <Cell fill={COLORS[colorIndex % COLORS.length]}/>;
+    })
+  }
+
 }
 
 
@@ -131,7 +171,7 @@ export class MapWrapper extends OutputTableCell{
         new TileLayer({
           source: new OSM(),
         }),
-        this.createVectorLayer()
+        //this.createPointLayer()
       ],
       //target: 'map',
     })
@@ -146,7 +186,7 @@ export class MapWrapper extends OutputTableCell{
   }
 
   //creates layer for points on map
-  createVectorLayer(){
+  createPointLayer(){
     let features = [];
 
     //if lat and long have been queried for then plot them on the map
@@ -185,13 +225,31 @@ export class MapWrapper extends OutputTableCell{
     return vectorLayer;
   }
 
-  //creates layer for geometries on map
+  //populates map with geometry layers
   createGeomLayer(){
 
-    let geomFeatures = [];
-
     if (this.state.geomData){
+      var id = this.props.geometryLabel;
+      var colorIndecies = this.getUniqueFields(id);
+
       this.state.geomData.forEach((item, i) => {
+        let colorIndex = colorIndecies.indexOf(item[id]);
+        let color = 'rgba(0, 0, 255, 0.1)';
+        let opacityHexValue = "4D";
+        if (colorIndex > -1) {
+          color = COLORS[colorIndex % COLORS.length] + opacityHexValue;
+        }
+
+        var style = new Style({
+          stroke: new Stroke({
+            color: 'blue',
+            width: 3,
+          }),
+          fill: new Fill({
+            color: color,
+          })
+        });
+
         var polygonFeature;
 
         if (item.g.type == "Polygon"){
@@ -201,9 +259,17 @@ export class MapWrapper extends OutputTableCell{
           polygonFeature = new Feature(
               new Polygon([newCoords]));
           //add poly to feature array
-          geomFeatures.push(polygonFeature);
+
+          let layer = new VectorLayer({
+                  source: new VectorSource({
+                      features: [polygonFeature]
+                  }),
+                  style: style
+          });
+          this.state.map.addLayer(layer);
         }
         else if (item.g.type == "MultiPolygon"){
+          let geomFeatures = [];
           //for each poly
           item.g.coordinates.forEach((multiPoly, i) => {
             //convert lon lat to OL coords
@@ -214,6 +280,13 @@ export class MapWrapper extends OutputTableCell{
             //add poly to feature array
             geomFeatures.push(polygonFeature);
           });
+          let layer = new VectorLayer({
+                  source: new VectorSource({
+                      features: geomFeatures
+                  }),
+                  style: style
+          });
+          this.state.map.addLayer(layer);
         }
         else {
           console.log(item.g.type);
@@ -222,27 +295,7 @@ export class MapWrapper extends OutputTableCell{
       });
     }
 
-    // create the source and layer for point features
-    let vectorSource = new VectorSource({
-      features: geomFeatures
-    });
-
-    //define how geometry will be displayed
-    var vectorLayer = new VectorLayer({
-      source: vectorSource,
-      style: new Style({
-        stroke: new Stroke({
-          color: 'blue',
-          width: 3,
-        }),
-        fill: new Fill({
-          color: 'rgba(0, 0, 255, 0.1)',
-        })
-      })
-    });
-
-
-    return vectorLayer;
+    return;
   }
 
   constructQuery(query){
@@ -276,10 +329,11 @@ export class MapWrapper extends OutputTableCell{
       new TileLayer({
         source: new OSM(),
       }),
-      this.createVectorLayer(),
-      this.createGeomLayer()
+      this.createPointLayer(),
+
     ])
 
+    this.createGeomLayer()
     //TODO: Change all width and heights to maxwidth maxhight and make it a function of vh and vw
     let style = {width: 600, height: 400};
     return (

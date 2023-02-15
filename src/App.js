@@ -17,11 +17,12 @@ export default class Page extends React.Component {
   }
 
   //create query where clause from input components and pass that object to all output components
+  //TODO: Rename queryResponse to queryWhereAndFrom
   submitQuery = () => {
-    let posting = this.refs.tableUno.submitQuery();
-    this.setState({ queryResponse: posting });
+    let queryWhereAndFrom = this.refs.tableUno.submitQuery();
+    this.setState({ queryResponse: queryWhereAndFrom });
 
-    return posting;
+    return queryWhereAndFrom;
   }
 
   render(){
@@ -180,7 +181,7 @@ const inputConfig = [
 
 const outputConfig = [
   [
-    { name: "Area Name", desc:"Breakdown of all ", field: "Area_Name", type: OutputComps.OutputPieChart }
+    { name: "Area Name", desc:"Breakdown of all ", field: "ZCTA5CE10", type: OutputComps.OutputPieChart }
   ]
 ];
 
