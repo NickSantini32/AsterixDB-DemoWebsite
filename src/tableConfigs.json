@@ -1,0 +1,68 @@
+{
+  "dataset": "csv.csv_set",
+  "url": "http://localhost:19002/query/service",
+  "tableLayout":[
+    [
+      {
+        "isInputRow": false,
+        "name": "Area Name",
+        "desc": "Breakdown of all ",
+        "field": "ZCTA5CE10",
+        "type": "OutputPieChart"
+      }
+    ],
+    [
+      {
+        "isInputRow": true,
+        "name": "Area Name",
+        "desc":"The area in which the event was reported",
+        "field": "Area_Name",
+        "type": "DataList"
+      },
+      {
+        "name": "Victim Descent",
+        "desc":"The ethnicity of the victim",
+        "field": "Vict_Descent",
+        "type": "RadioButtons"
+      },
+      {
+        "name": "Victim Sex",
+        "desc":"The gender of the victim",
+        "field": "Vict_Sex",
+        "type": "TableDropDown"
+      }
+    ],
+    [
+      {
+        "isInputRow": true,
+        "name": "Date Range",
+        "desc":"Pick a date range for the data",
+        "field": "Datetime_OCC",
+        "type": "DateRange"
+      },
+      {
+        "name": "Zip Code Filter",
+        "desc":"Pick a zip code for the data",
+        "field": "ZCTA5CE10",
+        "type": "TableDropDown"
+      }
+    ],
+    [
+      {
+        "type": "SubmitButton"
+      }
+    ],
+    [
+      {
+        "isInputRow": false,
+        "name": "Area Name",
+        "desc": "Breakdown of all ",
+        "fields": ["lat", "long"],
+        "geometry": "g",
+        "geometryLabel": "ZCTA5CE10",
+        "geomDataset": "csv.csv_zipset",
+        "type": "MapWrapper"
+      }
+    ]
+  ]
+}

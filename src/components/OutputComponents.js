@@ -13,10 +13,8 @@ import {Extent} from 'ol/extent';
 import $ from 'jquery';
 import squel from 'squel'
 
+const jsonMasterFileData = require('./../tableConfigs.json');
 const COLORS = ["#0074D9", "#FF4136", "#2ECC40", "#FF851B", "#7FDBFF", "#B10DC9", "#FFDC00", "#001f3f", "#39CCCC", "#01FF70", "#85144b", "#F012BE", "#3D9970", "#111111", "#AAAAAA"];
-
-//TODO: Define this globally somewhere, maybe JSON
-var dbName = "csv_set"
 
 //Super class for all output components
 class OutputTableCell extends PureComponent {
@@ -27,7 +25,7 @@ class OutputTableCell extends PureComponent {
 
   //query the dataset with the input parameter and set the result to state variable
   makeQuery(query){
-    let url = "http://localhost:19002/query/service";
+    let url = jsonMasterFileData.url;
     let posting = $.post(url, { statement: query.toString() });
 
     posting.done((data) => {
@@ -64,7 +62,7 @@ class OutputTableCell extends PureComponent {
       let query = this.props.queryResponse.clone();
       query.field(field).distinct();
 
-      let url = "http://localhost:19002/query/service";
+      let url = jsonMasterFileData.url;
       let posting = $.ajax({
          type: "GET",
          url: url,
@@ -240,6 +238,7 @@ export class MapWrapper extends OutputTableCell{
           color = COLORS[colorIndex % COLORS.length] + opacityHexValue;
         }
 
+        //create unique color style
         var style = new Style({
           stroke: new Stroke({
             color: 'blue',
@@ -258,8 +257,8 @@ export class MapWrapper extends OutputTableCell{
           //make feature from polygon
           polygonFeature = new Feature(
               new Polygon([newCoords]));
-          //add poly to feature array
 
+          //create layer for feature and add it
           let layer = new VectorLayer({
                   source: new VectorSource({
                       features: [polygonFeature]
@@ -280,6 +279,8 @@ export class MapWrapper extends OutputTableCell{
             //add poly to feature array
             geomFeatures.push(polygonFeature);
           });
+
+          //create layer for features and add it
           let layer = new VectorLayer({
                   source: new VectorSource({
                       features: geomFeatures
@@ -301,15 +302,13 @@ export class MapWrapper extends OutputTableCell{
   constructQuery(query){
     //get geometries if they exist
     if (this.props.geometry){
-      let q = "use csv; \n" +
-              squel.select()
+      let q = squel.select()
               .field(this.props.geometry)
               .field(this.props.geometryLabel)
               .from(this.props.geomDataset)
               .toString();
 
-      console.log(q)
-      let url = "http://localhost:19002/query/service";
+      let url = jsonMasterFileData.url;
       let posting = $.post(url, { statement: q });
 
       posting.done((data) => {

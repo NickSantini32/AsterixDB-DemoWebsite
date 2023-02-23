@@ -5,6 +5,8 @@ import {Button, Form, Dropdown} from 'react-bootstrap';
 import $ from 'jquery';
 import squel from 'squel'
 
+const jsonMasterFileData = require('./../tableConfigs.json');
+
 //Super class for all input components
 class InputTableCell extends React.Component {
   constructor(props){
@@ -16,13 +18,12 @@ class InputTableCell extends React.Component {
 
   //Loads fields speccified in props
   loadDistinctFields(field){
-    var url = "http://localhost:19002/query/service";
+    var url = jsonMasterFileData.url;
 
-    var query = "use csv;" +
-            squel.select()
+    var query = squel.select()
               .distinct()
               .field(field)
-              .from("csv_set")
+              .from(jsonMasterFileData.dataset)
               .toString();
 
     var posting = $.post(url, { statement: query });
@@ -224,41 +225,5 @@ export class DateRange extends InputTableCell{
       return "date(" + this.props.field + ") >= date(\"" + this.state.startDate + "\") AND date(" + this.props.field + ") <= date(\"" + this.state.endDate + "\")";
 
     return "";
-  }
-}
-
-
-export class ZipcodeFilter extends InputTableCell{
-  constructor(props) {
-    super(props);
-    this.state.text = "";
-  }
-
-  onChange = () => {
-    this.state.text = this.refs.list1.value;
-  }
-
-  render() {
-    return (
-      <div>
-        <h4 htmlFor="exampleDataList" className="form-label">{this.props.name}</h4>
-        <label htmlFor="exampleDataList" className="form-label">{this.props.desc}</label>
-        <input className="form-control"
-        ref="list1" list={this.props.field} placeholder="Type to search..." onChange={this.onChange}/>
-        <datalist id={this.props.field}>
-          {this.state.distinct.map((item, i) => {
-            return <option value={item} key={i}/>;
-          })}
-        </datalist>
-      </div>
-    );
-  }
-
-  getFieldPossibleValues(){
-    // input checking
-    if (this.state.distinct.includes(this.state.text)){
-      return [this.state.text];
-    }
-    return [];
   }
 }
