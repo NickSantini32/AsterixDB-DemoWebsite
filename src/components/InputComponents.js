@@ -101,15 +101,15 @@ export class DataList extends InputTableCell {
 export class RadioButtons extends InputTableCell{
   constructor(props){
     super(props);
-    this.state.selected = [];
+    this.state.selected = new Set();
   }
 
   click = (item) => {
     console.log(item);
-    if (this.state.selected.includes(item)){
-      this.state.selected.pop(item);
+    if (this.state.selected.has(item)){
+      this.state.selected.delete(item);
     } else{
-      this.state.selected.push(item);
+      this.state.selected.add(item);
     }
     console.log(this.state.selected);
   }
@@ -139,7 +139,7 @@ export class RadioButtons extends InputTableCell{
   }
 
   getFieldPossibleValues(){
-    return this.state.selected;
+    return Array.from(this.state.selected);
   }
 }
 
