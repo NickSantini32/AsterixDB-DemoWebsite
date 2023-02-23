@@ -7,28 +7,26 @@ import * as OutputComps from './components/OutputComponents';
 import * as InputComps from './components/InputComponents';
 import squel from 'squel'
 
-//TODO: DEFINE DATABASE ELEMENTS GLOBALLY
 const jsonMasterFileData = require('./tableConfigs.json');
 
 //homepage display class
 export default class Page extends React.Component {
   constructor(props){
     super(props);
-    this.state = { queryResponse: {} };
+    this.state = { queryWhereAndFrom: {} };
     this.inputTables = new Map();
     this.tableSetup = this.constructTablesFromJSON();
     console.log(jsonMasterFileData);
   }
 
   //create query where clause from input components and pass that object to all output components
-  //TODO: Rename queryResponse to queryWhereAndFrom
   submitQuery = () => {
     let queryWhereAndFrom = squel.select().from(jsonMasterFileData.dataset);
     this.inputTables.forEach((ref) => {
       queryWhereAndFrom = ref.current.submitQuery(queryWhereAndFrom);
     });
 
-    this.setState({ queryResponse: queryWhereAndFrom });
+    this.setState({ queryWhereAndFrom: queryWhereAndFrom });
 
     return queryWhereAndFrom;
   }
@@ -73,9 +71,9 @@ export default class Page extends React.Component {
 
       if (row[0].isInputRow){
         let newRef = this.inputTables.get(i);
-        return <Table tableConfig={[row]} queryResponse={this.state.queryResponse} ref={newRef}/>
+        return <Table tableConfig={[row]} queryWhereAndFrom={this.state.queryWhereAndFrom} ref={newRef}/>
       }
-      return <Table tableConfig={[row]} queryResponse={this.state.queryResponse}/>
+      return <Table tableConfig={[row]} queryWhereAndFrom={this.state.queryWhereAndFrom}/>
     });
 
     return ret;
@@ -91,15 +89,6 @@ class SubmitButton extends React.Component {
 
   onClick = () => {
     let posting = this.props.submitQuery();
-
-    //TODO: Come back to button loading later
-    // this.setState( {isLoading: true} );
-
-    // posting.done((data) => {
-    //   this.setState( {isLoading: false} );
-    // }).fail((data) => {
-    //   console.log("fail");
-    // });
   }
 
   render(){
@@ -113,8 +102,6 @@ class SubmitButton extends React.Component {
     );
   }
 }
-
-//TODO: add constructor check to make sure no field is quereied twice in table config
 
 //Table wrapper class meant to contain exclusively input or all output components
 class Table extends React.Component {
@@ -138,7 +125,7 @@ class Table extends React.Component {
         return (
           <Row className="justify-content-md-center" id="buttons" key={i}>
             {row.map((cellData, j) => {
-              return <TableCol {... cellData} queryResponse={this.props.queryResponse} key={j} ref={this.children[i][j]}/>;
+              return <TableCol {... cellData} queryWhereAndFrom={this.props.queryWhereAndFrom} key={j} ref={this.children[i][j]}/>;
             })}
           </Row>
         )
@@ -148,9 +135,6 @@ class Table extends React.Component {
   }
 
   constructQuery(query){
-    //TODO: define use csv and csv_set somewhere globally
-    // let finQuery = squel.select().from("csv.csv_set");
-
     //gather all query restrictions from input comps and add them to finQuery with a WHERE clause
     this.children.forEach((row, i) => {
       row.forEach((cell, j) => {
@@ -166,9 +150,6 @@ class Table extends React.Component {
 
   submitQuery(query){
     query = this.constructQuery(query);
-    //TODO: define this URL higher in the higherarchy
-    // let url = "http://localhost:19002/query/service";
-
     return query
   }
 }
@@ -196,9 +177,10 @@ class TableCol extends React.Component {
         console.error("Error: type improperly defined: ", type);
       }
 
-      let MyComponent = type;//OutputComps.OutputPieChart;
+      let MyComponent = type;
+      let maxWidth = (type != OutputComps.MapWrapper) ? "50%" : "100%"
       let ret = (
-        <Col align="center" style={{maxWidth: "50%"}}>
+        <Col align="center" style={{maxWidth: maxWidth}}>
           <MyComponent {... this.props} ref={this.child}/>
         </Col>
       );

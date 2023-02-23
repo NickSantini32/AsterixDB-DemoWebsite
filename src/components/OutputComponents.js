@@ -58,8 +58,8 @@ class OutputTableCell extends PureComponent {
   * @return {String[]} - array of distinct values
   */
   getUniqueFields(field){
-    if (this.props.queryResponse && !$.isEmptyObject(this.props.queryResponse)){
-      let query = this.props.queryResponse.clone();
+    if (this.props.queryWhereAndFrom && !$.isEmptyObject(this.props.queryWhereAndFrom)){
+      let query = this.props.queryWhereAndFrom.clone();
       query.field(field).distinct();
 
       let url = jsonMasterFileData.url;
@@ -84,7 +84,7 @@ class OutputTableCell extends PureComponent {
   componentDidUpdate(prevProps){
     //if props are new make the relevant query
     if (this.props != prevProps){
-      this.makeQuery(this.constructQuery(this.props.queryResponse.clone()));
+      this.makeQuery(this.constructQuery(this.props.queryWhereAndFrom.clone()));
     }
   }
 }
@@ -333,8 +333,7 @@ export class MapWrapper extends OutputTableCell{
     ])
 
     this.createGeomLayer()
-    //TODO: Change all width and heights to maxwidth maxhight and make it a function of vh and vw
-    let style = {width: 600, height: 400};
+    let style = {width: "60vw", height: "60vh"};
     return (
       <div id="map-container" style={style}></div>
     );
