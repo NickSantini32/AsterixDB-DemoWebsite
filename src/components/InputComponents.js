@@ -39,7 +39,9 @@ class InputTableCell extends React.Component {
     })
   }
 
-  //create sql query based on options selected in implemented subclass
+  /**
+  * @return {String} - Where clause derived from parameters of the cell
+  */
   getSqlQuery(){
     let fields = this.getFieldPossibleValues();
 

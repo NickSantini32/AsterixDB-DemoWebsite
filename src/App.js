@@ -16,14 +16,13 @@ export default class Page extends React.Component {
     this.state = { queryWhereAndFrom: {} };
     this.inputTables = new Map();
     this.tableSetup = this.constructTablesFromJSON();
-    console.log(jsonMasterFileData);
   }
 
-  //create query where clause from input components and pass that object to all output components
+  //create query where clause from input tables and pass the select object to all output components through props
   submitQuery = () => {
     let queryWhereAndFrom = squel.select().from(jsonMasterFileData.dataset);
     this.inputTables.forEach((ref) => {
-      queryWhereAndFrom = ref.current.submitQuery(queryWhereAndFrom);
+      queryWhereAndFrom = ref.current.getQueryWhereClause(queryWhereAndFrom);
     });
 
     this.setState({ queryWhereAndFrom: queryWhereAndFrom });
@@ -41,12 +40,6 @@ export default class Page extends React.Component {
     );
   }
 
-  // <Table tableConfig={outputConfig} queryResponse={this.state.queryResponse}/>
-  // <Table tableConfig={inputConfig} ref="tableUno"/>
-  // <br/>
-  // <SubmitButton submitQuery={this.submitQuery}/>
-  // <Table tableConfig={outputConfig1} queryResponse={this.state.queryResponse}/>
-
   //constructs this.tableSetup from JSON input. Also logs refs for input rows
   constructTablesFromJSON(){
     let ret = jsonMasterFileData.tableLayout.map((row, i) => {
@@ -60,11 +53,14 @@ export default class Page extends React.Component {
     return ret;
   }
 
-
-  //supplies the proper JSX items entries for all tables defined in this.tableSetup
+  /**
+  *   Supplies the proper JSX entries for all tables defined in this.tableSetup
+  *
+  *   @return {JSX} - Tables to render
+  */
   convertStoredTablesToJSX(){
+    //for each table in tableSetup, define a JSX table
     let ret = this.tableSetup.map((row, i) => {
-      let elem
       if (row[0].type == "SubmitButton"){
         return <SubmitButton submitQuery={this.submitQuery}/>
       }
@@ -84,11 +80,11 @@ export default class Page extends React.Component {
 class SubmitButton extends React.Component {
   constructor(props){
     super(props);
-    this.state = { isLoading: false };
   }
 
+  //Click function defined by submitQuery prop passed in
   onClick = () => {
-    let posting = this.props.submitQuery();
+    this.props.submitQuery();
   }
 
   render(){
@@ -96,9 +92,8 @@ class SubmitButton extends React.Component {
       <Button
         id="submit"
         className="btn btn-primary rounded m-2"
-        disabled={this.state.isLoading}
         onClick={this.onClick}
-      >{this.state.isLoading ? 'Loading…' : 'Submit'}</Button>
+      >Submit</Button>
     );
   }
 }
@@ -134,8 +129,14 @@ class Table extends React.Component {
     );
   }
 
-  constructQuery(query){
-    //gather all query restrictions from input comps and add them to finQuery with a WHERE clause
+  /**
+  *   This function is only to be called on tables flagged as Input tables
+  *
+  *   @param {squel.select()} - initial squel select object
+  *   @return {squel.select()} - squel select object with updated where clause
+  */
+  getQueryWhereClause(query){
+    //gather all query restrictions from input comps and add them to query with a WHERE clause
     this.children.forEach((row, i) => {
       row.forEach((cell, j) => {
         let queryPart = cell.current.getChildQuery();
@@ -146,11 +147,6 @@ class Table extends React.Component {
     });
     console.log(query.toString());
     return query;
-  }
-
-  submitQuery(query){
-    query = this.constructQuery(query);
-    return query
   }
 }
 
@@ -165,26 +161,16 @@ class TableCol extends React.Component {
 
   render(){
     if (this.props.type){
-      let type = this.props.type;
-
-      if (OutputComps[type]){
-        type = OutputComps[type];
-      }
-      else if (InputComps[type]){
-        type = InputComps[type];
-      }
-      else {
-        console.error("Error: type improperly defined: ", type);
-      }
-
+      let type = this.getComponent(this.props.type);
       let MyComponent = type;
+      //map gets more max width
       let maxWidth = (type != OutputComps.MapWrapper) ? "50%" : "100%"
-      let ret = (
+
+      return (
         <Col align="center" style={{maxWidth: maxWidth}}>
           <MyComponent {... this.props} ref={this.child}/>
         </Col>
       );
-      return ret;
     }
 
     return(
@@ -192,33 +178,27 @@ class TableCol extends React.Component {
     );
   }
 
+  /**
+  * @return {String} - Where clause for the child component within the column
+  */
   getChildQuery(){
     return this.child.current.getSqlQuery();
   }
+
+  /**
+  * @param {String} - the name of the desired component
+  * @return {Object} - The component which matches the name given
+  */
+  getComponent(type){
+    if (OutputComps[type]){
+      return OutputComps[type];
+    }
+    else if (InputComps[type]){
+      return InputComps[type];
+    }
+    else {
+      console.error("Error: type improperly defined: ", type);
+    }
+    return {};
+  }
 }
-
-
-//Configs for each table. Will be moved to JSON eventually
-const inputConfig = [
-  [
-    { name: "Area Name", desc:"The area in which the event was reported", field: "Area_Name", type: InputComps.DataList },
-    { name: "Victim Descent", desc:"The ethnicity of the victim", field: "Vict_Descent", type: InputComps.RadioButtons },
-    { name: "Victim Sex", desc:"The gender of the victim", field: "Vict_Sex", type: InputComps.TableDropDown }
-  ],
-  [
-    { name: "Date Range", desc:"Pick a date range for the data", field: "Datetime_OCC", type: InputComps.DateRange },
-    { name: "Zip Code Filter", desc:"Pick a zip code for the data", field: "ZCTA5CE10", type: InputComps.TableDropDown },
-  ]
-];
-
-const outputConfig = [
-  [
-    { name: "Area Name", desc:"Breakdown of all ", field: "ZCTA5CE10", type: "OutputPieChart" }
-  ]
-];
-
-const outputConfig1 = [
-  [
-    { name: "Area Name", desc:"Breakdown of all ", fields: ["lat", "long"], geometry: "g", geometryLabel: "ZCTA5CE10", geomDataset: "csv_zipset", type: "MapWrapper" }
-  ]
-];
