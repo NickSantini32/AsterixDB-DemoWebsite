@@ -11,7 +11,7 @@ const jsonMasterFileData = require('./../tableConfigs.json');
 class InputTableCell extends React.Component {
   constructor(props){
     super(props);
-    this.state = { distinct: []};    
+    this.state = { distinct: []};
   }
 
   componentDidMount(){
@@ -98,6 +98,9 @@ export class DataList extends InputTableCell {
     );
   }
 
+  /**
+  * @see function definition in parent class
+  */
   getFieldPossibleValues(){
     // input checking
     if (this.state.distinct.includes(this.state.text)){
@@ -147,6 +150,9 @@ export class RadioButtons extends InputTableCell{
     );
   }
 
+  /**
+  * @see function definition in parent class
+  */
   getFieldPossibleValues(){
     return Array.from(this.state.selected);
   }
@@ -188,6 +194,9 @@ export class TableDropDown extends InputTableCell{
     );
   }
 
+  /**
+  * @see function definition in parent class
+  */
   getFieldPossibleValues(){
     if (this.state.currentSelection === "Any"){
       return [];
@@ -205,8 +214,6 @@ export class DateRange extends InputTableCell{
     this.state.startDate = null;
     this.state.endDate = null;
   }
-
-
 
   render() {
     return (
@@ -227,6 +234,9 @@ export class DateRange extends InputTableCell{
     );
   }
 
+  /**
+  * @see function definition in parent class
+  */
   getSqlQuery(){
     squel.select();
 
