@@ -15,6 +15,7 @@ export default class Page extends React.Component {
     super(props);
     this.state = { queryWhereAndFrom: {} };
     this.inputTables = new Map();
+    this.outputTables = new Map();
     this.tableSetup = this.constructTablesFromJSON();
   }
 
@@ -42,12 +43,18 @@ export default class Page extends React.Component {
 
   //constructs this.tableSetup from JSON input. Also logs refs for input rows
   constructTablesFromJSON(){
-    let ret = jsonMasterFileData.tableLayout.map((row, i) => {
-      if (row[0].isInputRow){ //assign ref to row if it is for input components
-        let newRef = React.createRef();
+    let ret = jsonMasterFileData.tableLayout.map((table, i) => {
+      let newRef = React.createRef();
+      if (table.isSubmitButton){
+        return table;
+      }
+      else if (table.isInputTable){ //assign ref to table if its an input table
         this.inputTables.set(i, newRef);
       }
-      return row;
+      else {
+        this.outputTables.set(i, newRef);
+      }
+      return table.rows;
     });
 
     return ret;
@@ -60,16 +67,13 @@ export default class Page extends React.Component {
   */
   convertStoredTablesToJSX(){
     //for each table in tableSetup, define a JSX table
-    let ret = this.tableSetup.map((row, i) => {
-      if (row[0].type == "SubmitButton"){
+    let ret = this.tableSetup.map((table, i) => {
+      if (table.isSubmitButton){
         return <SubmitButton submitQuery={this.submitQuery}/>
       }
 
-      if (row[0].isInputRow){
-        let newRef = this.inputTables.get(i);
-        return <Table tableConfig={[row]} queryWhereAndFrom={this.state.queryWhereAndFrom} ref={newRef}/>
-      }
-      return <Table tableConfig={[row]} queryWhereAndFrom={this.state.queryWhereAndFrom}/>
+      let newRef = this.inputTables.has(i) ? this.inputTables.get(i) : this.outputTables.get(i);
+      return <Table tableConfig={table} queryWhereAndFrom={this.state.queryWhereAndFrom} ref={newRef}/>
     });
 
     return ret;
