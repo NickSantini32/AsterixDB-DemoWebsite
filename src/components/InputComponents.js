@@ -1,7 +1,7 @@
-import React, { Component }  from 'react';
+import React from 'react';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
-import {Button, Form, Dropdown} from 'react-bootstrap';
+import {Form, Dropdown} from 'react-bootstrap';
 import $ from 'jquery';
 import squel from 'squel'
 
@@ -11,14 +11,18 @@ const jsonMasterFileData = require('./../tableConfigs.json');
 class InputTableCell extends React.Component {
   constructor(props){
     super(props);
-    this.state = { distinct: []};
-    this.loadDistinctFields(props.field);
+    this.state = { distinct: []};    
   }
 
+  componentDidMount(){
+    this.loadDistinctFields();
+  }
 
-  //Loads fields speccified in props
-  loadDistinctFields(field){
-    var url = jsonMasterFileData.url;
+  /**
+  *   Loads all unique options for the field speccified in props
+  */
+  loadDistinctFields(){
+    var field = this.props.field;
 
     var query = squel.select()
               .distinct()
@@ -26,6 +30,7 @@ class InputTableCell extends React.Component {
               .from(jsonMasterFileData.dataset)
               .toString();
 
+    var url = jsonMasterFileData.url;
     var posting = $.post(url, { statement: query });
 
     posting.done((data) => {
@@ -48,7 +53,7 @@ class InputTableCell extends React.Component {
     var query = ""
     if (fields.length > 0){
       fields.forEach((item, i) => {
-        query += this.props.field + " = " + "\"" + item + "\"";
+        query += this.props.field + " = \"" + item + "\"";
         if (i < fields.length - 1){ query += " OR "; }
       });
     }
@@ -69,10 +74,12 @@ export class DataList extends InputTableCell {
   constructor(props) {
     super(props);
     this.state.text = "";
+    this.state.listRef = React.createRef();
   }
 
   onChange = () => {
-    this.state.text = this.refs.list1.value;
+    console.log(this)
+    this.state.text = this.state.listRef.current.value;
   }
 
   render() {
@@ -81,7 +88,7 @@ export class DataList extends InputTableCell {
         <h4 htmlFor="exampleDataList" className="form-label">{this.props.name}</h4>
         <label htmlFor="exampleDataList" className="form-label">{this.props.desc}</label>
         <input className="form-control"
-        ref="list1" list={this.props.field} placeholder="Type to search..." onChange={this.onChange}/>
+        ref={this.state.listRef} list={this.props.field} placeholder="Type to search..." onChange={this.onChange}/>
         <datalist id={this.props.field}>
           {this.state.distinct.map((item, i) => {
             return <option value={item} key={i}/>;
@@ -182,7 +189,7 @@ export class TableDropDown extends InputTableCell{
   }
 
   getFieldPossibleValues(){
-    if (this.state.currentSelection == "Any"){
+    if (this.state.currentSelection === "Any"){
       return [];
     }
     else {

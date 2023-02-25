@@ -1,14 +1,13 @@
-import React, { PureComponent, useRef, useState, useEffect } from 'react';
-import { PieChart, Pie, Sector, Cell, ResponsiveContainer } from 'recharts';
+import React, { PureComponent } from 'react';
+import { PieChart, Pie, Cell } from 'recharts';
 
-import {Feature, Map, Overlay, View} from 'ol/index';
+import {Feature, Map, View} from 'ol/index';
 import {OSM, Vector as VectorSource} from 'ol/source';
-import {Point, Polygon, LineString, MultiPolygon} from 'ol/geom';
+import {Point, Polygon} from 'ol/geom';
 import {fromExtent} from 'ol/geom/Polygon';
 import {Style, Circle, Fill, Stroke} from 'ol/style';
 import {Tile as TileLayer, Vector as VectorLayer} from 'ol/layer';
 import {fromLonLat} from 'ol/proj';
-import {Extent} from 'ol/extent';
 
 import $ from 'jquery';
 import squel from 'squel'
@@ -83,16 +82,13 @@ class OutputTableCell extends PureComponent {
   //if a query object (where clause only) is passed from the table, we query for what we need using it
   componentDidUpdate(prevProps){
     //if props are new make the relevant query
-    if (this.props != prevProps){
+    if (this.props !== prevProps){
       this.makeQuery(this.constructQuery(this.props.queryWhereAndFrom.clone()));
     }
   }
 }
 
 export class OutputPieChart extends OutputTableCell {
-  constructor(props){
-    super(props);
-  }
 
   constructQuery(query){
     if (this.props.field){
@@ -112,7 +108,7 @@ export class OutputPieChart extends OutputTableCell {
   }
 
   render() {
-    if (this.state.data.length == 0)
+    if (this.state.data.length === 0)
       return(<div/>);
 
     let width = 400;
@@ -251,7 +247,7 @@ export class MapWrapper extends OutputTableCell{
 
         var polygonFeature;
 
-        if (item.g.type == "Polygon"){
+        if (item.g.type === "Polygon"){
           //convert lon lat to OL coords
           let newCoords = item.g.coordinates[0].map(x => fromLonLat(x));
           //make feature from polygon
@@ -267,7 +263,7 @@ export class MapWrapper extends OutputTableCell{
           });
           this.state.map.addLayer(layer);
         }
-        else if (item.g.type == "MultiPolygon"){
+        else if (item.g.type === "MultiPolygon"){
           let geomFeatures = [];
           //for each poly
           item.g.coordinates.forEach((multiPoly, i) => {

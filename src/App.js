@@ -1,8 +1,7 @@
-import React, { Component }  from 'react';
+import React from 'react';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
-import {Button, Form, Dropdown, Collapse, Col, Row} from 'react-bootstrap';
-import $ from 'jquery';
+import {Button, Col, Row} from 'react-bootstrap';
 import * as OutputComps from './components/OutputComponents';
 import * as InputComps from './components/InputComponents';
 import squel from 'squel'
@@ -27,23 +26,26 @@ export default class Page extends React.Component {
     });
 
     this.setState({ queryWhereAndFrom: queryWhereAndFrom });
-
-    return queryWhereAndFrom;
   }
 
   render(){
     return(
       <div>
-        <h1 class="mb-0 pb-0" >LAPD Crime Data Filters</h1>
-        <label class="mb-4">Select how you want to filter the dataset</label>
+        <h1 className="mb-0 pb-0" >LAPD Crime Data Filters</h1>
+        <label className="mb-4">Select how you want to filter the dataset</label>
         {this.convertStoredTablesToJSX()}
       </div>
     );
   }
 
-  //constructs this.tableSetup from JSON input. Also logs refs for input rows
+  /**
+  *   constructs this.tableSetup from JSON input. Also stores refs for input and output rows
+  *
+  *   @return {[[[cellObject]]]} - 3D array, The levels are Tables, rows, cellObjects
+  *   @see table layout in tableConfigs.json for object structure
+  */
   constructTablesFromJSON(){
-    let ret = jsonMasterFileData.tableLayout.map((table, i) => {
+    let tableSetup = jsonMasterFileData.tableLayout.map((table, i) => {
       let newRef = React.createRef();
       if (table.isSubmitButton){
         return table;
@@ -56,8 +58,7 @@ export default class Page extends React.Component {
       }
       return table.rows;
     });
-
-    return ret;
+    return tableSetup;
   }
 
   /**
@@ -69,11 +70,11 @@ export default class Page extends React.Component {
     //for each table in tableSetup, define a JSX table
     let ret = this.tableSetup.map((table, i) => {
       if (table.isSubmitButton){
-        return <SubmitButton submitQuery={this.submitQuery}/>
+        return <SubmitButton submitQuery={this.submitQuery} ref={React.createRef()} key={i}/>
       }
 
       let newRef = this.inputTables.has(i) ? this.inputTables.get(i) : this.outputTables.get(i);
-      return <Table tableConfig={table} queryWhereAndFrom={this.state.queryWhereAndFrom} ref={newRef}/>
+      return <Table tableConfig={table} queryWhereAndFrom={this.state.queryWhereAndFrom} ref={newRef} key={i}/>
     });
 
     return ret;
@@ -82,9 +83,6 @@ export default class Page extends React.Component {
 
 //Button to submit query
 class SubmitButton extends React.Component {
-  constructor(props){
-    super(props);
-  }
 
   //Click function defined by submitQuery prop passed in
   onClick = () => {
@@ -168,7 +166,7 @@ class TableCol extends React.Component {
       let type = this.getComponent(this.props.type);
       let MyComponent = type;
       //map gets more max width
-      let maxWidth = (type != OutputComps.MapWrapper) ? "50%" : "100%"
+      let maxWidth = (type !== OutputComps.MapWrapper) ? "50%" : "100%"
 
       return (
         <Col align="center" style={{maxWidth: maxWidth}}>
