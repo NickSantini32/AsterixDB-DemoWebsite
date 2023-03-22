@@ -75,35 +75,6 @@ class OutputTableCell extends PureComponent {
     return query;
   }
 
-  /**
-  * returns an array of all distinct values in the field speccified by the argument.
-  * To give each entry a consistent unique color, use COLORS[i] where i is the index of the item in the returned array
-  * @param {String} - the field to query for value
-  * @return {String[]} - array of distinct values
-  */
-  getUniqueFields(field){
-    if (this.props.queryWhereAndFrom && !$.isEmptyObject(this.props.queryWhereAndFrom)){
-      let query = this.props.queryWhereAndFrom.clone();
-      query.field(jsonMasterFileData.dataset + '.' + field).distinct();
-
-      return this.makeQuery(query);
-    }
-  }
-
-  setColorIndecies(){
-    if (!this.props.field)
-      return;
-
-    this.setState({ colorIndecies: [] }); //clear color indexes
-    var id = this.props.field;
-
-    let promise = this.getUniqueFields(id);
-    promise.then((result) => {
-      result = result.map((entry) => {return entry[id]});
-      this.setState({ colorIndecies: result });
-    })
-  }
-
   /** 
   * if new props are recieved, requery the output field. Make any independent queries if makeIndependentQueries is defined
   * @param {Object} - previous props (only care about props.queryWhereAndFrom which is a squel object with a where clause)
@@ -132,9 +103,17 @@ export class OutputPieChart extends OutputTableCell {
     if (this.props.field){
       let dataset = this.props.fieldIsFromSeparateDataset ? this.props.externalDataset : jsonMasterFileData.dataset;
 
-      query.field(dataset + '.' + this.props.field + " as name");
-      query.field("COUNT(*) AS `value`");
-      query.group(dataset + '.' + this.props.field);    
+      if (this.props.fieldIsFromSeparateDataset && !query.toString().includes("FROM " + this.props.externalDataset)) {
+        query.from(this.props.externalDataset); 
+      }
+      if (this.props.fieldIsFromSeparateDataset){
+        query.where(this.props.joinCondition);
+      }
+
+      query.field(dataset + '.' + this.props.field + " as name")
+          .field("COUNT(*) AS `value`")
+          .group(dataset + '.' + this.props.field);
+
     }
     else {
       throw new Error("Used fields instead of field in pie chart");
@@ -145,10 +124,6 @@ export class OutputPieChart extends OutputTableCell {
 
   renderLabel(entry) {
     return entry.name + ": " + entry.value;
-  }
-
-  makeIndependentQueries(){
-    this.setColorIndecies();
   }
 
   render() {
@@ -184,12 +159,8 @@ export class OutputPieChart extends OutputTableCell {
 
   //returns array of pie cells with unique colors
   populateGraph(){
-    var id = this.props.field;
-    var colorIndecies = this.state.colorIndecies;
-
     return this.state.data.map((entry, i) => {
-      let colorIndex = colorIndecies.indexOf(entry.name);
-      return <Cell fill={COLORS[colorIndex % COLORS.length]} key={i}/>;
+      return <Cell fill={COLORS[i % COLORS.length]} key={i}/>;
     })
   }
 
@@ -412,8 +383,9 @@ export class MapWrapper extends OutputTableCell{
     query.field("count(*) as " + countName + ", " + geomDataset + "." + geomLabel)
       .where("st_contains(" + geomDataset + "." + geom + ", st_make_point(" + dataset + "." + 
         coords[1] + ", " + dataset + "." + coords[0] + "))")
-      // .from(geomDataset)
       .group(geomDataset + "." + geomLabel);
+
+    if (!query.toString().includes("FROM " + geomDataset)){ query.from(geomDataset); }
 
     let promise = this.makeQuery(query);
     promise.then((result) => {

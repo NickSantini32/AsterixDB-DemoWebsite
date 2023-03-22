@@ -8,7 +8,7 @@
       "isInputTable": false,
       "rows": [[
           {
-            "name": "Area Name",
+            "name": "Zip code",
             "desc": "Breakdown of all ",
             "field": "ZCTA5CE10",
             "type": "OutputPieChart",
