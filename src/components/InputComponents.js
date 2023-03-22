@@ -30,8 +30,21 @@ class InputTableCell extends React.Component {
               .from(jsonMasterFileData.dataset)
               .toString();
 
+    if(this.props.fieldIsFromSeparateDataset){
+      let conf = this.props
+      query = squel.select()
+                .distinct()
+                .field(conf.externalDataset + "." + field)
+                .from(jsonMasterFileData.dataset)
+                .join(conf.externalDataset, null, conf.joinCondition)
+                .toString();
+      console.log(query)
+    }
+
     var url = jsonMasterFileData.url;
-    var posting = $.post(url, { statement: query });
+    let prefix = jsonMasterFileData.datasetPrefix ? jsonMasterFileData.datasetPrefix : "";
+
+    let posting = $.post(url, { statement: prefix + query.toString() });
 
     posting.done((data) => {
       this.setState({
@@ -39,7 +52,7 @@ class InputTableCell extends React.Component {
         distinct: data.results.map((item, i) => { return item[field]; })
       });
     }).fail((data) => {
-      console.log("Query Failed: ");
+      console.error("query failed: ");
       console.log(data);
     })
   }
@@ -51,9 +64,13 @@ class InputTableCell extends React.Component {
     let fields = this.getFieldPossibleValues();
 
     var query = ""
+    let dataset = jsonMasterFileData.dataset;
     if (fields.length > 0){
       fields.forEach((item, i) => {
-        query += this.props.field + " = \"" + item + "\"";
+        (this.props.fieldIsFromSeparateDataset) ?
+        query += this.props.externalDataset + "." + this.props.field + " = \"" + item + "\"" : //clause if field is from a separate dataset
+        query += dataset + "." + this.props.field + " = \"" + item + "\"" ; //default clause
+
         if (i < fields.length - 1){ query += " OR "; }
       });
     }
@@ -66,7 +83,7 @@ class InputTableCell extends React.Component {
   */
   getFieldPossibleValues(){
     //subclasses must implement
-    throw new Error("Abstract classes can't be instantiated.");
+    throw new Error("Abstract class ImputComponent can't be instantiated.");
   }
 }
 
@@ -87,8 +104,8 @@ export class DataList extends InputTableCell {
       <div>
         <h4 htmlFor="exampleDataList" className="form-label">{this.props.name}</h4>
         <label htmlFor="exampleDataList" className="form-label">{this.props.desc}</label>
-        <input className="form-control"
-        ref={this.state.listRef} list={this.props.field} placeholder="Type to search..." onChange={this.onChange}/>
+        <input className="form-control" ref={this.state.listRef} list={this.props.field}
+        placeholder="Type to search..." onChange={this.onChange}/>
         <datalist id={this.props.field}>
           {this.state.distinct.map((item, i) => {
             return <option value={item} key={i}/>;
@@ -207,7 +224,6 @@ export class TableDropDown extends InputTableCell{
   }
 }
 
-
 export class DateRange extends InputTableCell{
   constructor(props) {
     super(props);
@@ -238,10 +254,11 @@ export class DateRange extends InputTableCell{
   * @see function definition in parent class
   */
   getSqlQuery(){
-    squel.select();
 
-    if (this.state.startDate && this.state.endDate)
-      return "date(" + this.props.field + ") >= date(\"" + this.state.startDate + "\") AND date(" + this.props.field + ") <= date(\"" + this.state.endDate + "\")";
+    if (this.state.startDate && this.state.endDate){
+      let dataset = jsonMasterFileData.dataset;
+      return "date(" + dataset + "." + this.props.field + ") >= date(\"" + this.state.startDate + "\") AND date(" + dataset + "." + this.props.field + ") <= date(\"" + this.state.endDate + "\")";
+    }
 
     return "";
   }

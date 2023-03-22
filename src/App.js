@@ -20,7 +20,7 @@ export default class Page extends React.Component {
 
   //create query where clause from input tables and pass the select object to all output components through props
   submitQuery = () => {
-    let queryWhereAndFrom = squel.select().from(jsonMasterFileData.dataset);
+    let queryWhereAndFrom = squel.select()//.from(jsonMasterFileData.dataset);
     this.inputTables.forEach((ref) => {
       queryWhereAndFrom = ref.current.getQueryWhereClause(queryWhereAndFrom);
     });
@@ -32,7 +32,7 @@ export default class Page extends React.Component {
     return(
       <div>
         <h1 className="mb-0 pb-0" >LAPD Crime Data Filters</h1>
-        <label className="mb-4">Select how you want to filter the dataset</label>
+        <label>Select how you want to filter the dataset</label>
         {this.convertStoredTablesToJSX()}
       </div>
     );
@@ -120,7 +120,7 @@ class Table extends React.Component {
       <div className="container">
       {this.props.tableConfig.map((row, i) => {
         return (
-          <Row className="justify-content-md-center" id="buttons" key={i}>
+          <Row className="justify-content-md-center my-3" id="buttons" key={i}>
             {row.map((cellData, j) => {
               return <TableCol {... cellData} queryWhereAndFrom={this.props.queryWhereAndFrom} key={j} ref={this.children[i][j]}/>;
             })}
@@ -143,10 +143,16 @@ class Table extends React.Component {
       row.forEach((cell, j) => {
         let queryPart = cell.current.getChildQuery();
         if (queryPart !== "") {
-          query.where(queryPart);
+          query.where(queryPart); 
+          if (this.props.tableConfig[i][j].fieldIsFromSeparateDataset){
+            let conf = this.props.tableConfig[i][j];
+            query.from(conf.externalDataset)
+            query.where(conf.joinCondition)
+          }
         }
       });
     });
+    query.from(jsonMasterFileData.dataset);
     console.log(query.toString());
     return query;
   }

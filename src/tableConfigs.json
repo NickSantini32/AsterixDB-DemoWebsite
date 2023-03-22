@@ -1,6 +1,8 @@
 {
-  "dataset": "csv.csv_set",
+  "datasetPrefix": "use csv;\n",
+  "dataset": "csv_set",
   "url": "http://localhost:19002/query/service",
+  "geoSpatialJoinQuery": "",
   "tableLayout":[
     {
       "isInputTable": false,
@@ -9,7 +11,10 @@
             "name": "Area Name",
             "desc": "Breakdown of all ",
             "field": "ZCTA5CE10",
-            "type": "OutputPieChart"
+            "type": "OutputPieChart",
+            "fieldIsFromSeparateDataset": true,
+            "externalDataset": "csv_zipset",
+            "joinCondition": "st_contains(csv_zipset.g, st_make_point(csv_set.long, csv_set.lat))"
           }
         ]]
     },
@@ -48,7 +53,10 @@
             "name": "Zip Code Filter",
             "desc":"Pick a zip code for the data",
             "field": "ZCTA5CE10",
-            "type": "TableDropDown"
+            "type": "TableDropDown",
+            "fieldIsFromSeparateDataset": true,
+            "externalDataset": "csv_zipset",
+            "joinCondition": "st_contains(csv_zipset.g, st_make_point(csv_set.long, csv_set.lat))"
           }
         ]
       ]
@@ -65,8 +73,9 @@
           "desc": "Breakdown of all ",
           "fields": ["lat", "long"],
           "geometry": "g",
+          "geometryName": "zip code",
           "geometryLabel": "ZCTA5CE10",
-          "geomDataset": "csv.csv_zipset",
+          "geomDataset": "csv_zipset",
           "type": "MapWrapper"
         }
       ]]
