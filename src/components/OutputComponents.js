@@ -1,6 +1,6 @@
-import React, { PureComponent, useEffect } from 'react';
+import React, { PureComponent } from 'react';
 import { PieChart, Pie, Cell } from 'recharts';
-import {Form, Label} from 'react-bootstrap';
+import {Form} from 'react-bootstrap';
 
 import {Feature, Map as OLMap, View} from 'ol/index';
 import {OSM, Vector as VectorSource} from 'ol/source';
@@ -40,8 +40,8 @@ class OutputTableCell extends PureComponent {
   * @param {squel} - query squel object
   * @return {Promise} - promise which on completions returns the query results
   */
-  makeQuery(query){
-    return new Promise(function(resolve, reject){
+  makeQuery (query) {
+    return new Promise((resolve, reject) => {
       let url = jsonMasterFileData.url;
       let prefix = jsonMasterFileData.datasetPrefix ? jsonMasterFileData.datasetPrefix : "";
 
@@ -82,9 +82,10 @@ class OutputTableCell extends PureComponent {
   componentDidUpdate(prevProps){
     //if props are new, make the relevant query
     if (this.props !== prevProps){
-      this.makeQueryAndSetData(
-        this.constructQuery(this.props.queryWhereAndFrom.clone())
-      );
+      let q = this.constructQuery(this.props.queryWhereAndFrom.clone());
+
+      console.log("Output query for", this.props.type, "\n\n", q.toString());
+      this.makeQueryAndSetData(q);
       if (typeof this.makeIndependentQueries === "function"){
         this.makeIndependentQueries();
       }
@@ -179,8 +180,10 @@ export class MapWrapper extends OutputTableCell{
 
     const map = new OLMap({
       view: new View({
-        center: [0, 0],
-        zoom: 2,
+        //center is at los angeles
+        center: fromLonLat( [-118.2437, 34.0522] ),
+        zoom: 10,
+        maxZoom: 12,
       }),
       layers: [
         new TileLayer({
@@ -207,6 +210,7 @@ export class MapWrapper extends OutputTableCell{
               .field(this.props.geometryLabel)
               .from(this.props.geomDataset);
 
+      console.log("Get geometries and names for", this.props.type, "\n\n", q.toString());
       let promise = this.makeQuery(q)
       promise.then((result) => {
         this.setState({ geomData: result }, () => { 
@@ -387,6 +391,7 @@ export class MapWrapper extends OutputTableCell{
 
     if (!query.toString().includes("FROM " + geomDataset)){ query.from(geomDataset); }
 
+    console.log("Choropleth query", this.props.type, "\n\n", query.toString());
     let promise = this.makeQuery(query);
     promise.then((result) => {
       let ret = new Map();
@@ -403,7 +408,9 @@ export class MapWrapper extends OutputTableCell{
   componentDidUpdate(prevProps){
     //if props are new, make the relevant query
     if (this.props !== prevProps){
-      let promise = this.makeQuery(this.constructQuery(this.props.queryWhereAndFrom.clone()));
+      let q = this.constructQuery(this.props.queryWhereAndFrom.clone());
+      console.log("Output query for", this.props.type, "\n\n", q.toString());
+      let promise = this.makeQuery(q);
       promise.then((result) => {
         this.setState({ data: result }, () => {
           this.refreshPointLayer();

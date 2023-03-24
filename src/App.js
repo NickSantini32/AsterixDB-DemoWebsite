@@ -22,8 +22,10 @@ export default class Page extends React.Component {
   submitQuery = () => {
     let queryWhereAndFrom = squel.select()//.from(jsonMasterFileData.dataset);
     this.inputTables.forEach((ref) => {
-      queryWhereAndFrom = ref.current.getQueryWhereClause(queryWhereAndFrom);
+      //TODO: this only works if you have one input table
+      queryWhereAndFrom = ref.current.getQueryWhereAndFrom(queryWhereAndFrom);
     });
+    console.log("Intermediate squel object", "\n\n", queryWhereAndFrom.toString());
 
     this.setState({ queryWhereAndFrom: queryWhereAndFrom });
   }
@@ -137,7 +139,7 @@ class Table extends React.Component {
   *   @param {squel.select()} - initial squel select object
   *   @return {squel.select()} - squel select object with updated where clause
   */
-  getQueryWhereClause(query){
+  getQueryWhereAndFrom(query){
     //gather all query restrictions from input comps and add them to query with a WHERE clause
     this.children.forEach((row, i) => {
       row.forEach((cell, j) => {
@@ -153,7 +155,6 @@ class Table extends React.Component {
       });
     });
     query.from(jsonMasterFileData.dataset);
-    console.log(query.toString());
     return query;
   }
 }

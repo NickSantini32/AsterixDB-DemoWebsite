@@ -38,8 +38,9 @@ class InputTableCell extends React.Component {
                 .from(jsonMasterFileData.dataset)
                 .join(conf.externalDataset, null, conf.joinCondition)
                 .toString();
-      console.log(query)
     }
+
+    console.log("Load potential values for", this.props.type, "\n\n", query);
 
     var url = jsonMasterFileData.url;
     let prefix = jsonMasterFileData.datasetPrefix ? jsonMasterFileData.datasetPrefix : "";
@@ -66,7 +67,7 @@ class InputTableCell extends React.Component {
     var query = ""
     let dataset = jsonMasterFileData.dataset;
     if (fields.length > 0){
-      fields.forEach((item, i) => {
+      fields.forEach((item, i) => { 
         (this.props.fieldIsFromSeparateDataset) ?
         query += this.props.externalDataset + "." + this.props.field + " = \"" + item + "\"" : //clause if field is from a separate dataset
         query += dataset + "." + this.props.field + " = \"" + item + "\"" ; //default clause
@@ -95,7 +96,6 @@ export class DataList extends InputTableCell {
   }
 
   onChange = () => {
-    console.log(this)
     this.state.text = this.state.listRef.current.value;
   }
 
@@ -134,13 +134,11 @@ export class RadioButtons extends InputTableCell{
   }
 
   click = (item) => {
-    console.log(item);
     if (this.state.selected.has(item)){
       this.state.selected.delete(item);
     } else{
       this.state.selected.add(item);
     }
-    console.log(this.state.selected);
   }
 
   render(){

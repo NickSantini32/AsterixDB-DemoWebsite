@@ -35,7 +35,7 @@
             "type": "RadioButtons"
           },
           {
-            "name": "Victim Sex",
+            "name": "Victim Gender",
             "desc":"The gender of the victim",
             "field": "Vict_Sex",
             "type": "TableDropDown"
