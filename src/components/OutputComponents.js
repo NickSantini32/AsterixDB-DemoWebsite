@@ -21,7 +21,7 @@ const COLORS = ["#0074D9", "#FF4136", "#2ECC40", "#FF851B", "#7FDBFF", "#B10DC9"
 class OutputTableCell extends PureComponent {
   constructor(props){
     super(props);
-    this.state = { data: [] }
+    this.state = { data: [] } //data is the result of the query
   }
 
   /**
@@ -96,11 +96,6 @@ class OutputTableCell extends PureComponent {
 }
 
 export class OutputPieChart extends OutputTableCell {
-  constructor(props){
-    super(props);
-    this.state.colorIndecies = [];
-  }
-
   /** 
   * @override of OutputTableCell.constructQuery
   */
@@ -176,9 +171,9 @@ export class OutputPieChart extends OutputTableCell {
 export class MapWrapper extends OutputTableCell{
   constructor(props){
     super(props);
-    this.state.geomPointCount = new Map();
+    this.state.geomPointCount = new Map(); //map of geometry to number of points in that geometry
 
-    this.state.geomButtonRef = React.createRef();
+    this.state.geomButtonRef = React.createRef(); //reference to the geom button
     //layer variables
     this.state.pointLayer = this.createPointLayer();
     this.state.geomLayer = this.createGeomLayer();
@@ -199,8 +194,8 @@ export class MapWrapper extends OutputTableCell{
       ]
     })
 
-    this.state.map = map;
-    this.state.geomData = [];
+    this.state.map = map; //map object
+    this.state.geomData = []; //array of all the geometry objects
 
   }
 

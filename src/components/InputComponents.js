@@ -91,8 +91,8 @@ class InputTableCell extends React.Component {
 export class DataList extends InputTableCell {
   constructor(props) {
     super(props);
-    this.state.text = "";
-    this.state.listRef = React.createRef();
+    this.state.text = ""; //text in the input field
+    this.state.listRef = React.createRef(); //reference to the input field
   }
 
   onChange = () => {
@@ -130,7 +130,7 @@ export class DataList extends InputTableCell {
 export class RadioButtons extends InputTableCell{
   constructor(props){
     super(props);
-    this.state.selected = new Set();
+    this.state.selected = new Set(); //set of selected options
   }
 
   click = (item) => {
@@ -176,7 +176,7 @@ export class RadioButtons extends InputTableCell{
 export class TableDropDown extends InputTableCell{
   constructor(props) {
     super(props);
-    this.state.currentSelection = "Any";
+    this.state.currentSelection = "Any"; //current selection in the dropdown
   }
 
   click(s){
@@ -225,8 +225,8 @@ export class TableDropDown extends InputTableCell{
 export class DateRange extends InputTableCell{
   constructor(props) {
     super(props);
-    this.state.startDate = null;
-    this.state.endDate = null;
+    this.state.startDate = null; //start date
+    this.state.endDate = null; //end date
   }
 
   render() {
