@@ -57,12 +57,13 @@ class OutputTableCell extends PureComponent {
   }
 
   /**
+  * Adds field to query object based on props.field/s
   * override this to construct queries if different behavior is required
-  *
-  *
+  * keep in mind, the arg will be changed as javascript passes by reference
+  * @param {squel} - query squel object
+  * @return {squel} - updated query squel object
   */
   constructQuery(query){
-    //Get which fields should be queried from tableConfig
     if (this.props.field){
       query.field(jsonMasterFileData.dataset + '.' + this.props.field);
     }
@@ -100,6 +101,9 @@ export class OutputPieChart extends OutputTableCell {
     this.state.colorIndecies = [];
   }
 
+  /** 
+  * @override of OutputTableCell.constructQuery
+  */
   constructQuery(query){
     if (this.props.field){
       let dataset = this.props.fieldIsFromSeparateDataset ? this.props.externalDataset : jsonMasterFileData.dataset;
@@ -123,6 +127,7 @@ export class OutputPieChart extends OutputTableCell {
     return query;
   }
 
+  //return label for pie chart based on entry object
   renderLabel(entry) {
     return entry.name + ": " + entry.value;
   }
@@ -226,7 +231,10 @@ export class MapWrapper extends OutputTableCell{
     this.queryAndSetGeomPointCount();
   }
 
-  //creates layer for points on map
+  /**
+  * called on construct, creates layer for points on map
+  * @returns {VectorLayer} - layer for points on map
+  */
   createPointLayer(){
 
     //define how points will be plotted
@@ -243,6 +251,7 @@ export class MapWrapper extends OutputTableCell{
     return vectorLayer;
   }
 
+  //refreshes the point layer based on props
   refreshPointLayer(){
     let features = [];
 
@@ -272,7 +281,10 @@ export class MapWrapper extends OutputTableCell{
     this.state.pointLayer.setSource(vectorSource);
   }
 
-  //populates map with geometry layers
+  /**
+  * called on construct, populates map with geometry layers
+  * @returns {VectorLayer} - choropleth layer for points on map
+  */
   createGeomLayer(){
 
       //define style function based on layer how many points in layer
@@ -325,6 +337,7 @@ export class MapWrapper extends OutputTableCell{
       return layer;
   }
 
+  //refreshes the geom layer based on props
   refreshGeomLayer(){
 
     if (this.state.geomData){
@@ -404,7 +417,10 @@ export class MapWrapper extends OutputTableCell{
     });
   }
   
-  //does the same as super.componentDidUpdate, but refreshes the point layer on setState callback
+  /** 
+  * does the same as super.componentDidUpdate, but refreshes the point layer on setState callback
+  * @param {Object} - previous props
+  */
   componentDidUpdate(prevProps){
     //if props are new, make the relevant query
     if (this.props !== prevProps){
@@ -430,7 +446,7 @@ export class MapWrapper extends OutputTableCell{
        this.state.pointLayer.setVisible(!checked);
        this.state.geomLayer.setVisible(checked);
      };
-    let label = "Show map cloropleth by " + this.props.geometryName
+    let label = "Show map choropleth by " + this.props.geometryName
 
     return (
       <>
