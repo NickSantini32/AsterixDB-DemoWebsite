@@ -249,6 +249,11 @@ export class MapWrapper extends OutputTableCell{
   //refreshes the point layer based on props
   refreshPointLayer(){
     let features = [];
+    let maxPoints = 5000;
+
+    if (this.state.data.length > maxPoints){ //dont render if too many points
+      return;
+    }
 
     //if lat and long have been queried for then plot them on the map
     this.state.data.forEach((item, i) => {

@@ -93,3 +93,7 @@ load dataset csv_zipset using localfs
 * 'npm install'
 * 'npm start'
 * The development webpage should now open
+
+# Some known issues
+* there is no indication that the website is processing / loading. I would have liked to add this if I had more time
+* When working with large datasets (like the full ~10M line LA crime set) the website bogs down and is very slow. It does eventually work but as stated above, there is no communication that it is loading. 
