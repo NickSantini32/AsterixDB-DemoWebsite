@@ -1,7 +1,7 @@
 {
   "datasetPrefix": "use csv;\n",
-  "unuseddataset": "csv_set",
-  "dataset": "csv_set_large",
+  "dataset": "csv_set",
+  "unuseddataset": "csv_set_large",
   "url": "http://localhost:19002/query/service",
   "geoSpatialJoinQuery": "",
   "tableLayout":[
@@ -15,8 +15,8 @@
             "type": "OutputPieChart",
             "fieldIsFromSeparateDataset": true,
             "externalDataset": "csv_zipset",
-            "joinCondition2": "st_contains(csv_zipset.g, st_make_point(csv_set.long, csv_set.lat))",
-            "joinCondition": "st_contains(csv_zipset.g, st_make_point(csv_set_large.long, csv_set_large.lat))"
+            "joinCondition": "st_contains(csv_zipset.g, st_make_point(csv_set.long, csv_set.lat))",
+            "joinCondition2": "st_contains(csv_zipset.g, st_make_point(csv_set_large.long, csv_set_large.lat))"
           }
         ]]
     },
@@ -58,8 +58,8 @@
             "type": "TableDropDown",
             "fieldIsFromSeparateDataset": true,
             "externalDataset": "csv_zipset",
-            "joinCondition2": "st_contains(csv_zipset.g, st_make_point(csv_set.long, csv_set.lat))",
-            "joinCondition": "st_contains(csv_zipset.g, st_make_point(csv_set_large.long, csv_set_large.lat))"
+            "joinCondition": "st_contains(csv_zipset.g, st_make_point(csv_set.long, csv_set.lat))",
+            "joinCondition2": "st_contains(csv_zipset.g, st_make_point(csv_set_large.long, csv_set_large.lat))"
           }
         ]
       ]
